@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /associations/{associationId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.ownerUserId);
+    }
+
+    match /needs/{needId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.associationOwnerId);
+    }
+
+    match /donations/{donationId} {
+      allow read: if isAdmin() || isOwner(resource.data.donorUserId) || isOwner(resource.data.associationOwnerId);
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.donorUserId);
+    }
+
+    match /updates/{updateId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() || isOwner(resource.data.associationOwnerId);
+    }
+
+    match /notifications/{notificationId} {
+      allow read, write: if isOwner(resource.data.userId);
+    }
+
+    match /favorites/{favoriteId} {
+      allow read, write: if isOwner(resource.data.userId);
+    }
+  }
+}
