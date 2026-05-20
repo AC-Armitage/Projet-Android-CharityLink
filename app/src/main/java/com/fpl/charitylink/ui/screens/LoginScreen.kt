@@ -1,8 +1,6 @@
 package com.fpl.charitylink.ui.screens
 
 import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -21,8 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.common.api.ApiException
 import com.fpl.charitylink.viewmodel.AuthState
 import com.fpl.charitylink.viewmodel.AuthViewModel
 import com.fpl.charitylink.ui.theme.*
@@ -147,10 +143,7 @@ fun LoginScreen(
 
                     // Google Sign-In button
                     OutlinedButton(
-                        onClick = {
-                            val intent = authViewModel.getGoogleSignInIntent(context as Activity)
-                            googleLauncher.launch(intent)
-                        },
+                        onClick = { authViewModel.signInWithGoogle(context) },
                         enabled = !isLoading,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(50)

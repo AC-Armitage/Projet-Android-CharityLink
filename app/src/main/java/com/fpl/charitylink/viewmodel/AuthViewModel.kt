@@ -1,10 +1,13 @@
 package com.fpl.charitylink.viewmodel
 
-import android.app.Activity
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -53,22 +56,25 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun getGoogleSignInIntent(activity: Activity) =
-        GoogleSignIn.getClient(
-            activity,
-            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(WEB_CLIENT_ID)
-                .requestEmail()
-                .build()
-        ).signInIntent
-
-    fun handleGoogleSignInResult(idToken: String?) {
+    fun signInWithGoogle(context: Context) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                val result = auth.signInWithCredential(credential).await()
-                _authState.value = AuthState.Success(result.user!!)
+                val credentialManager = CredentialManager.create(context)
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(WEB_CLIENT_ID)
+                    .build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+                val result = credentialManager.getCredential(context, request)
+                val googleIdToken = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+                val firebaseCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
+                val authResult = auth.signInWithCredential(firebaseCredential).await()
+                _authState.value = AuthState.Success(authResult.user!!)
+            } catch (e: GetCredentialException) {
+                _authState.value = AuthState.Error(e.message ?: "Google sign-in failed")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Google sign-in failed")
             }
@@ -85,6 +91,6 @@ class AuthViewModel : ViewModel() {
     }
 
     companion object {
-        const val WEB_CLIENT_ID = "643180925766-okslpbei5thamd72ak30enos88skn9la.apps.googleusercontent.com" // ← from Firebase Console
+        const val WEB_CLIENT_ID = "YOUR_WEB_CLIENT_ID" // ← replace this
     }
 }
