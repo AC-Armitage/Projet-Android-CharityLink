@@ -1,6 +1,5 @@
 package com.fpl.charitylink.ui.screens
 
-import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -37,20 +36,6 @@ fun LoginScreen(
     val isLoading = authState is AuthState.Loading
     val errorMessage = (authState as? AuthState.Error)?.message
 
-    // Google Sign-In launcher
-    val googleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            authViewModel.handleGoogleSignInResult(account.idToken)
-        } catch (e: ApiException) {
-            // cancelled or failed — ViewModel stays in Idle
-        }
-    }
-
-    // Navigate on success
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
             authViewModel.resetState()
@@ -59,9 +44,7 @@ fun LoginScreen(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)
     ) {
         Box(modifier = Modifier.size(220.dp).align(Alignment.TopEnd).background(PrimaryFixed.copy(alpha = 0.2f), CircleShape))
         Box(modifier = Modifier.size(220.dp).align(Alignment.BottomStart).background(TertiaryFixedDim.copy(alpha = 0.2f), CircleShape))
@@ -94,7 +77,6 @@ fun LoginScreen(
                     Text(text = "Continue your journey of making an impact today.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Error message
                     if (errorMessage != null) {
                         Text(text = errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -127,7 +109,6 @@ fun LoginScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Email login button
                     Button(
                         onClick = { authViewModel.login(email, password) },
                         enabled = email.isNotBlank() && password.isNotBlank() && !isLoading,
@@ -141,7 +122,6 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Google Sign-In button
                     OutlinedButton(
                         onClick = { authViewModel.signInWithGoogle(context) },
                         enabled = !isLoading,
