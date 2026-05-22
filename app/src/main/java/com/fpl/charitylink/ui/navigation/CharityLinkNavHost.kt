@@ -16,6 +16,7 @@ object CharityLinkDestinations {
     const val REGISTER = "register"
     const val DONOR_HOME = "donor_home"
     const val ASSOCIATION_HOME = "association_home"
+    const val PROFILE = "profile"
 }
 
 @Composable
@@ -60,10 +61,31 @@ fun CharityLinkNavHost() {
             )
         }
         composable(CharityLinkDestinations.DONOR_HOME) {
-            DonorHomeScreen()
+            DonorHomeScreen(
+                onProfileClick = {
+                    navController.navigate(CharityLinkDestinations.PROFILE)
+                },
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(CharityLinkDestinations.LOGIN) {
+                        popUpTo(0)
+                    }
+                }
+            )
         }
         composable(CharityLinkDestinations.ASSOCIATION_HOME) {
             AssociationHomeScreen()
+        }
+        composable(CharityLinkDestinations.PROFILE) {
+            ProfileScreen(
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(CharityLinkDestinations.LOGIN) {
+                        popUpTo(0)
+                    }
+                },
+                authViewModel = authViewModel
+            )
         }
     }
 }

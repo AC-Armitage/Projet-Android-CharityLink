@@ -91,6 +91,6 @@ class AuthViewModel : ViewModel() {
     }
 
     companion object {
-        const val WEB_CLIENT_ID = "YOUR_WEB_CLIENT_ID" // ← replace this
+        const val WEB_CLIENT_ID = "643180925766-okslpbei5thamd72ak30enos88skn9la.apps.googleusercontent.com"
     }
 }

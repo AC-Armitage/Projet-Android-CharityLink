@@ -1,6 +1,7 @@
 package com.fpl.charitylink.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,7 +79,10 @@ private data class AssociationItem(
 )
 
 @Composable
-fun DonorHomeScreen() {
+fun DonorHomeScreen(
+    onProfileClick: () -> Unit = {},
+    onLogout: () -> Unit = {}
+) {
     val urgentNeeds = remember {
         listOf(
             UrgentNeed(
@@ -130,7 +134,7 @@ fun DonorHomeScreen() {
 
     Scaffold(
         topBar = { DonorTopBar() },
-        bottomBar = { DonorBottomBar() },
+        bottomBar = { DonorBottomBar(onProfileClick = onProfileClick) },
         floatingActionButton = { DonateFab() },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
@@ -514,29 +518,40 @@ private fun DonateFab() {
 }
 
 @Composable
-private fun DonorBottomBar() {
+private fun DonorBottomBar(onProfileClick: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(label = "Home", icon = Icons.Outlined.Home, selected = true)
-            BottomNavItem(label = "Explore", icon = Icons.Outlined.Explore, selected = false)
-            BottomNavItem(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false)
-            BottomNavItem(label = "Profile", icon = Icons.Outlined.Person, selected = false)
+            BottomNavItem(label = "Home", icon = Icons.Outlined.Home, selected = true, onClick = {})
+            BottomNavItem(label = "Explore", icon = Icons.Outlined.Explore, selected = false, onClick = {})
+            BottomNavItem(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false, onClick = {})
+            BottomNavItem(label = "Profile", icon = Icons.Outlined.Person, selected = false, onClick = onProfileClick)
         }
     }
+
 }
 
 @Composable
-private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean) {
+private fun BottomNavItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit = {}
+) {
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Surface(color = background, shape = RoundedCornerShape(50)) {
+    Surface(
+        color = background,
+        shape = RoundedCornerShape(50),
+        onClick = onClick
+    ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -546,3 +561,5 @@ private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vect
         }
     }
 }
+
+
