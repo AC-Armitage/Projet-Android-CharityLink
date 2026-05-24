@@ -1,10 +1,14 @@
 package com.fpl.charitylink.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.fpl.charitylink.viewmodel.AuthState
 import com.fpl.charitylink.viewmodel.AuthViewModel
 import com.fpl.charitylink.ui.screens.*
 
@@ -24,13 +28,40 @@ fun CharityLinkNavHost() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
 
-    // If user is already logged in, skip to home
-    val startDestination = if (authViewModel.currentUser != null)
-        CharityLinkDestinations.DONOR_HOME
-    else
-        CharityLinkDestinations.SPLASH
+    // Handle navigation after auth success
+    val authState by authViewModel.authState.collectAsState()
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            val role = (authState as AuthState.Success).role
+            val destination = if (role == "association")
+                CharityLinkDestinations.ASSOCIATION_HOME
+            else
+                CharityLinkDestinations.DONOR_HOME
+            navController.navigate(destination) { popUpTo(0) }
+            authViewModel.resetState()
+        }
+    }
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    // If already logged in, fetch role and navigate
+    LaunchedEffect(Unit) {
+        if (authViewModel.currentUser != null) {
+            authViewModel.fetchCurrentUserRole { role ->
+                val destination = if (role == "association")
+                    CharityLinkDestinations.ASSOCIATION_HOME
+                else
+                    CharityLinkDestinations.DONOR_HOME
+                navController.navigate(destination) { popUpTo(0) }
+            }
+        }
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = if (authViewModel.currentUser != null)
+            CharityLinkDestinations.DONOR_HOME
+        else
+            CharityLinkDestinations.SPLASH
+    ) {
         composable(CharityLinkDestinations.SPLASH) {
             SplashScreen(onGetStarted = { navController.navigate(CharityLinkDestinations.ONBOARDING) })
         }
@@ -42,34 +73,41 @@ fun CharityLinkNavHost() {
         }
         composable(CharityLinkDestinations.ROLE_SELECTION) {
             RoleSelectionScreen(
-                onContinue = { navController.navigate(CharityLinkDestinations.LOGIN) },
-                onCreateAccount = { navController.navigate(CharityLinkDestinations.REGISTER) }
+                onContinue = { role ->
+                    navController.navigate("${CharityLinkDestinations.LOGIN}/$role")
+                },
+                onCreateAccount = { role ->
+                    navController.navigate("${CharityLinkDestinations.REGISTER}/$role")
+                }
             )
         }
-        composable(CharityLinkDestinations.LOGIN) {
+        composable("${CharityLinkDestinations.LOGIN}/{role}") { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "donor"
             LoginScreen(
-                onLogin = { navController.navigate(CharityLinkDestinations.DONOR_HOME) { popUpTo(0) } },
-                onCreateAccount = { navController.navigate(CharityLinkDestinations.REGISTER) },
+                onLogin = { },
+                onCreateAccount = {
+                    navController.navigate("${CharityLinkDestinations.REGISTER}/$role")
+                },
                 authViewModel = authViewModel
             )
         }
-        composable(CharityLinkDestinations.REGISTER) {
+        composable("${CharityLinkDestinations.REGISTER}/{role}") { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "donor"
             RegisterScreen(
-                onRegister = { navController.navigate(CharityLinkDestinations.DONOR_HOME) { popUpTo(0) } },
-                onBackToLogin = { navController.navigate(CharityLinkDestinations.LOGIN) },
+                onRegister = { },
+                onBackToLogin = {
+                    navController.navigate("${CharityLinkDestinations.LOGIN}/$role")
+                },
+                role = role,
                 authViewModel = authViewModel
             )
         }
         composable(CharityLinkDestinations.DONOR_HOME) {
             DonorHomeScreen(
-                onProfileClick = {
-                    navController.navigate(CharityLinkDestinations.PROFILE)
-                },
+                onProfileClick = { navController.navigate(CharityLinkDestinations.PROFILE) },
                 onLogout = {
                     authViewModel.logout()
-                    navController.navigate(CharityLinkDestinations.LOGIN) {
-                        popUpTo(0)
-                    }
+                    navController.navigate(CharityLinkDestinations.LOGIN + "/donor") { popUpTo(0) }
                 }
             )
         }
@@ -80,9 +118,7 @@ fun CharityLinkNavHost() {
             ProfileScreen(
                 onLogout = {
                     authViewModel.logout()
-                    navController.navigate(CharityLinkDestinations.LOGIN) {
-                        popUpTo(0)
-                    }
+                    navController.navigate(CharityLinkDestinations.LOGIN + "/donor") { popUpTo(0) }
                 },
                 authViewModel = authViewModel
             )

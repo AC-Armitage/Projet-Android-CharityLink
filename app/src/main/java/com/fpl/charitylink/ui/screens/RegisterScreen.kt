@@ -25,6 +25,7 @@ import com.fpl.charitylink.ui.theme.*
 fun RegisterScreen(
     onRegister: () -> Unit,
     onBackToLogin: () -> Unit,
+    role: String = "donor",             // ← new
     authViewModel: AuthViewModel = viewModel()
 ) {
     var fullName by rememberSaveable { mutableStateOf("") }
@@ -111,7 +112,7 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(20.dp))
                     val isFormValid = fullName.isNotBlank() && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank() && password == confirmPassword
                     Button(
-                        onClick = { authViewModel.register(email, password) },
+                        onClick = { authViewModel.register(email, password, fullName, role) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isFormValid && !isLoading,
                         shape = RoundedCornerShape(50),

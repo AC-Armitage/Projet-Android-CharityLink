@@ -11,6 +11,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,44 +20,61 @@ import kotlinx.coroutines.tasks.await
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
-    data class Success(val user: FirebaseUser) : AuthState()
+    data class Success(val user: FirebaseUser, val role: String) : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
 class AuthViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
     val currentUser: FirebaseUser? get() = auth.currentUser
 
-    fun register(email: String, password: String) {
+    // --- Register with role ---
+    fun register(email: String, password: String, fullName: String, role: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
                 val result = auth.createUserWithEmailAndPassword(email, password).await()
-                _authState.value = AuthState.Success(result.user!!)
+                val user = result.user!!
+                // Save user data to Firestore
+                db.collection("users").document(user.uid).set(
+                    mapOf(
+                        "uid" to user.uid,
+                        "fullName" to fullName,
+                        "email" to email,
+                        "role" to role,
+                        "createdAt" to System.currentTimeMillis()
+                    )
+                ).await()
+                _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Registration failed")
             }
         }
     }
 
+    // --- Login then fetch role ---
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
-                _authState.value = AuthState.Success(result.user!!)
+                val user = result.user!!
+                val role = fetchRole(user.uid)
+                _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Login failed")
             }
         }
     }
 
-    fun signInWithGoogle(context: Context) {
+    // --- Google Sign-In then fetch/create role ---
+    fun signInWithGoogle(context: Context, role: String = "donor") {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
@@ -72,12 +90,50 @@ class AuthViewModel : ViewModel() {
                 val googleIdToken = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
                 val firebaseCredential = GoogleAuthProvider.getCredential(googleIdToken, null)
                 val authResult = auth.signInWithCredential(firebaseCredential).await()
-                _authState.value = AuthState.Success(authResult.user!!)
+                val user = authResult.user!!
+
+                // Check if user already exists in Firestore
+                val doc = db.collection("users").document(user.uid).get().await()
+                val existingRole = if (doc.exists()) {
+                    doc.getString("role") ?: role
+                } else {
+                    // New Google user — save to Firestore
+                    db.collection("users").document(user.uid).set(
+                        mapOf(
+                            "uid" to user.uid,
+                            "fullName" to (user.displayName ?: ""),
+                            "email" to (user.email ?: ""),
+                            "role" to role,
+                            "createdAt" to System.currentTimeMillis()
+                        )
+                    ).await()
+                    role
+                }
+                _authState.value = AuthState.Success(user, existingRole)
             } catch (e: GetCredentialException) {
                 _authState.value = AuthState.Error(e.message ?: "Google sign-in failed")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Google sign-in failed")
             }
+        }
+    }
+
+    // --- Fetch role from Firestore ---
+    private suspend fun fetchRole(uid: String): String {
+        return try {
+            val doc = db.collection("users").document(uid).get().await()
+            doc.getString("role") ?: "donor"
+        } catch (e: Exception) {
+            "donor"
+        }
+    }
+
+    // --- Fetch role for already logged in user ---
+    fun fetchCurrentUserRole(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            val uid = auth.currentUser?.uid ?: return@launch
+            val role = fetchRole(uid)
+            onResult(role)
         }
     }
 

@@ -44,8 +44,8 @@ import com.fpl.charitylink.ui.theme.TertiaryFixedDim
 
 @Composable
 fun RoleSelectionScreen(
-    onContinue: () -> Unit,
-    onCreateAccount: () -> Unit
+    onContinue: (String) -> Unit,
+    onCreateAccount: (String) -> Unit
 ) {
     var selectedRole by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -147,7 +147,7 @@ fun RoleSelectionScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = onContinue,
+                onClick = { onContinue(selectedRole!!) },
                 enabled = selectedRole != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50)
@@ -159,7 +159,7 @@ fun RoleSelectionScreen(
                     contentDescription = null
                 )
             }
-            TextButton(onClick = onCreateAccount) {
+            TextButton(onClick = { onCreateAccount(selectedRole ?: "donor") }) {
                 Text(
                     text = "Already have an account? Log in",
                     style = MaterialTheme.typography.labelLarge,
