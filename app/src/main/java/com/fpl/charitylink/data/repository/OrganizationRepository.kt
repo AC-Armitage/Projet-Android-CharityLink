@@ -23,4 +23,11 @@ class OrganizationRepository {
             .get().await()
             .toObjects(Organization::class.java)
     }
+    suspend fun updateOrganization(uid: String, updates: Map<String, Any>) {
+        organizations.document(uid).update(updates).await()
+    }
+
+    suspend fun deleteOrganization(uid: String) {
+        organizations.document(uid).delete().await()
+    }
 }

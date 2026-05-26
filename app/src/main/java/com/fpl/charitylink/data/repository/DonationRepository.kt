@@ -31,4 +31,19 @@ class DonationRepository {
             .get().await()
             .toObjects(Donation::class.java)
     }
+    suspend fun getAssociationDonations(associationId: String): List<Donation> {
+        return donations
+            .whereEqualTo("associationId", associationId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .get().await()
+            .toObjects(Donation::class.java)
+    }
+
+    suspend fun getTotalDonatedByUser(donorId: String): Double {
+        return donations
+            .whereEqualTo("donorId", donorId)
+            .get().await()
+            .toObjects(Donation::class.java)
+            .sumOf { it.amount }
+    }
 }

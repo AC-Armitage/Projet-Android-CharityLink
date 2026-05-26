@@ -42,4 +42,15 @@ class CampaignRepository {
             .update("raisedAmount", com.google.firebase.firestore.FieldValue.increment(amount))
             .await()
     }
+    suspend fun deleteCampaign(campaignId: String) {
+        campaigns.document(campaignId).delete().await()
+    }
+
+    suspend fun updateCampaignStatus(campaignId: String, status: String) {
+        campaigns.document(campaignId).update("status", status).await()
+    }
+
+    suspend fun updateCampaign(campaign: Campaign) {
+        campaigns.document(campaign.id).set(campaign).await()
+    }
 }

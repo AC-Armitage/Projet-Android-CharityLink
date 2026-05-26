@@ -36,4 +36,19 @@ class NotificationRepository {
             .get().await()
             .size()
     }
+    suspend fun markAllAsRead(userId: String) {
+        val unread = notifications
+            .whereEqualTo("userId", userId)
+            .whereEqualTo("read", false)
+            .get().await()
+        val batch = db.batch()
+        unread.documents.forEach { doc ->
+            batch.update(doc.reference, "read", true)
+        }
+        batch.commit().await()
+    }
+
+    suspend fun deleteNotification(notificationId: String) {
+        notifications.document(notificationId).delete().await()
+    }
 }
