@@ -16,7 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
+import com.fpl.charitylink.data.model.User
+import com.fpl.charitylink.data.repository.UserRepository
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
@@ -28,7 +29,7 @@ class AuthViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
-
+    private val userRepository = UserRepository()
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
@@ -41,16 +42,14 @@ class AuthViewModel : ViewModel() {
             try {
                 val result = auth.createUserWithEmailAndPassword(email, password).await()
                 val user = result.user!!
-                // Save user data to Firestore
-                db.collection("users").document(user.uid).set(
-                    mapOf(
-                        "uid" to user.uid,
-                        "fullName" to fullName,
-                        "email" to email,
-                        "role" to role,
-                        "createdAt" to System.currentTimeMillis()
+                userRepository.saveUser(
+                    User(
+                        uid = user.uid,
+                        fullName = fullName,
+                        email = email,
+                        role = role
                     )
-                ).await()
+                )
                 _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Registration failed")
@@ -120,12 +119,7 @@ class AuthViewModel : ViewModel() {
 
     // --- Fetch role from Firestore ---
     private suspend fun fetchRole(uid: String): String {
-        return try {
-            val doc = db.collection("users").document(uid).get().await()
-            doc.getString("role") ?: "donor"
-        } catch (e: Exception) {
-            "donor"
-        }
+        return userRepository.getUser(uid)?.role ?: "donor"
     }
 
     // --- Fetch role for already logged in user ---
