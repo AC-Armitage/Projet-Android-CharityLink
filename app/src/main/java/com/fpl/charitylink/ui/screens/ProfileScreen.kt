@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -23,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fpl.charitylink.viewmodel.AuthViewModel
-import com.fpl.charitylink.ui.theme.*
+import androidx.compose.material.icons.automirrored.outlined.*
 
 // Replace the top of ProfileScreen with:
 @Composable
@@ -43,6 +42,108 @@ fun ProfileScreen(
     val photoUrl = cachedUser["photoUrl"]?.ifBlank { null }
         ?: firebaseUser?.photoUrl?.toString()
     val role = cachedUser["role"] ?: "donor"
+
+    Scaffold(
+        topBar = { ProfileTopBar(photoUrl) },
+        bottomBar = { ProfileBottomBar() }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+            ) {
+                if (photoUrl != null) {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = displayName, style = MaterialTheme.typography.headlineSmall)
+            Text(text = email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = role.replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            ProfileMenuItem(
+                icon = Icons.Outlined.Edit,
+                title = "Edit Profile",
+                subtitle = "Change your name or profile picture",
+                onClick = { /* TODO */ }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            ProfileMenuItem(
+                icon = Icons.Outlined.History,
+                title = "Donation History",
+                subtitle = "View all your past contributions",
+                onClick = { /* TODO */ }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            ProfileMenuItem(
+                icon = Icons.Outlined.Settings,
+                title = "Settings",
+                subtitle = "App preferences and account security",
+                onClick = { /* TODO */ }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            ProfileMenuItem(
+                icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                title = "Help & Support",
+                subtitle = "FAQ and contact us",
+                onClick = { /* TODO */ }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Logout")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
 
 @Composable
 private fun ProfileMenuItem(
