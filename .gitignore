@@ -5,7 +5,6 @@
 .DS_Store
 /build
 /design
-/model.md
 /captures
 .externalNativeBuild
 .cxx
@@ -17,4 +16,15 @@ local.properties
 *.aab
 *.dex
 *.class
+
+# Firebase / Secrets
 app/google-services.json
+*google-services.json
+*google-services.*
+jks
+keystore
+
+# Documentation / Plans
+plan.md
+team-plan.md
+model.md

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Fastfood
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
@@ -34,7 +35,6 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.VolunteerActivism
-import androidx.compose.material.icons.outlined.Fastfood
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,7 +46,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,8 +61,13 @@ import coil.compose.AsyncImage
 import com.fpl.charitylink.ui.theme.SurfaceContainerHigh
 import com.fpl.charitylink.ui.theme.SurfaceContainerHighest
 import com.fpl.charitylink.ui.theme.SurfaceContainerLowest
+import com.fpl.charitylink.viewmodel.AssociationHomeViewModel
+import com.fpl.charitylink.viewmodel.AuthViewModel
+import java.util.Locale
+import kotlin.math.min
 
 private data class NeedItem(
+    val id: String,
     val title: String,
     val status: String,
     val statusColor: Color,
@@ -69,41 +77,72 @@ private data class NeedItem(
 )
 
 @Composable
-fun AssociationHomeScreen() {
+fun AssociationHomeScreen(
+    authViewModel: AuthViewModel = viewModel(),
+    onProfileClick: () -> Unit = {},
+    onExploreClick: () -> Unit = {},
+    onDonationsClick: () -> Unit = {},
+    onPostNeedClick: () -> Unit = {},
+    onNeedClick: (String) -> Unit = {}
+) {
     val colorScheme = MaterialTheme.colorScheme
-    val needs = remember(colorScheme) {
-        listOf(
-            NeedItem(
-                title = "School Lunch Program",
-                status = "Open",
-                statusColor = colorScheme.secondary,
-                progressLabel = "450 / 1000 Meals",
-                progress = 0.45f,
-                icon = Icons.Outlined.Fastfood
-            ),
-            NeedItem(
-                title = "Winter Coats Drive",
-                status = "In Progress",
-                statusColor = colorScheme.tertiary,
-                progressLabel = "82 / 100 Coats",
-                progress = 0.82f,
-                icon = Icons.Outlined.Checkroom
-            ),
-            NeedItem(
-                title = "Clinic Renovation",
-                status = "Fulfilled",
-                statusColor = colorScheme.primary,
-                progressLabel = "$5,000 / $5,000",
-                progress = 1f,
-                icon = Icons.Outlined.AccountBalanceWallet
-            )
+    val associationHomeViewModel: AssociationHomeViewModel = viewModel()
+    val uiState by associationHomeViewModel.uiState.collectAsState()
+    val associationId = authViewModel.currentUser?.uid
+    val errorMessage = uiState.errorMessage
+
+    LaunchedEffect(associationId) {
+        associationHomeViewModel.load(associationId)
+    }
+
+    val needs = uiState.campaigns.map { campaign ->
+        val status = campaign.status.ifBlank { "active" }
+        val statusColor = when (status) {
+            "open" -> colorScheme.secondary
+            "in_progress" -> colorScheme.tertiary
+            "fulfilled" -> colorScheme.primary
+            "active" -> colorScheme.secondary
+            else -> colorScheme.primary
+        }
+        val progress = if (campaign.goalAmount > 0.0) {
+            min(1f, (campaign.raisedAmount / campaign.goalAmount).toFloat())
+        } else {
+            0f
+        }
+        val raised = String.format(Locale.getDefault(), "%,.0f", campaign.raisedAmount)
+        val goal = String.format(Locale.getDefault(), "%,.0f", campaign.goalAmount)
+        val progressLabel = if (campaign.goalAmount > 0.0) {
+            "$raised / $goal"
+        } else {
+            "No goal set"
+        }
+        val icon = when (campaign.category.lowercase()) {
+            "food" -> Icons.Outlined.Fastfood
+            "clothes" -> Icons.Outlined.Checkroom
+            else -> Icons.Outlined.Payments
+        }
+
+        NeedItem(
+            id = campaign.id,
+            title = campaign.title,
+            status = status.replaceFirstChar { it.uppercase() },
+            statusColor = statusColor,
+            progressLabel = progressLabel,
+            progress = progress,
+            icon = icon
         )
     }
 
     Scaffold(
         topBar = { AssociationTopBar() },
-        bottomBar = { AssociationBottomBar() },
-        floatingActionButton = { PostNeedFab() },
+        bottomBar = {
+            AssociationBottomBar(
+                onProfileClick = onProfileClick,
+                onExploreClick = onExploreClick,
+                onDonationsClick = onDonationsClick
+            )
+        },
+        floatingActionButton = { PostNeedFab(onClick = onPostNeedClick) },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
@@ -115,7 +154,17 @@ fun AssociationHomeScreen() {
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item {
-                SummaryGrid()
+                SummaryGrid(activeNeeds = needs.size)
+            }
+
+            if (uiState.isLoading) {
+                item {
+                    LoadingState()
+                }
+            } else if (errorMessage != null) {
+                item {
+                    ErrorState(message = errorMessage)
+                }
             }
 
             item {
@@ -133,8 +182,14 @@ fun AssociationHomeScreen() {
                 }
             }
 
-            items(needs) { need ->
-                NeedCard(need)
+            if (needs.isEmpty() && !uiState.isLoading) {
+                item {
+                    EmptyState(message = "No needs yet. Create your first campaign.")
+                }
+            } else {
+                items(needs) { need ->
+                    NeedCard(need = need, onClick = { onNeedClick(need.id) })
+                }
             }
         }
     }
@@ -190,7 +245,7 @@ private fun AssociationTopBar() {
 }
 
 @Composable
-private fun SummaryGrid() {
+private fun SummaryGrid(activeNeeds: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -233,7 +288,7 @@ private fun SummaryGrid() {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SummaryCard(
                 label = "Active Needs",
-                value = "24",
+                value = activeNeeds.toString(),
                 icon = Icons.Outlined.AssignmentLate,
                 tint = MaterialTheme.colorScheme.secondary
             )
@@ -269,10 +324,11 @@ private fun RowScope.SummaryCard(
 }
 
 @Composable
-private fun NeedCard(need: NeedItem) {
+private fun NeedCard(need: NeedItem, onClick: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        onClick = onClick
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -357,9 +413,9 @@ private fun NeedCard(need: NeedItem) {
 }
 
 @Composable
-private fun PostNeedFab() {
+private fun PostNeedFab(onClick: () -> Unit) {
     Button(
-        onClick = { },
+        onClick = onClick,
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -378,7 +434,11 @@ private fun PostNeedFab() {
 }
 
 @Composable
-private fun AssociationBottomBar() {
+private fun AssociationBottomBar(
+    onProfileClick: () -> Unit,
+    onExploreClick: () -> Unit,
+    onDonationsClick: () -> Unit
+) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
             modifier = Modifier
@@ -387,20 +447,25 @@ private fun AssociationBottomBar() {
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(label = "Home", icon = Icons.Outlined.Home, selected = true)
-            BottomNavItem(label = "Explore", icon = Icons.Outlined.Explore, selected = false)
-            BottomNavItem(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false)
-            BottomNavItem(label = "Profile", icon = Icons.Outlined.Person, selected = false)
+            BottomNavItem(label = "Home", icon = Icons.Outlined.Home, selected = true, onClick = {})
+            BottomNavItem(label = "Explore", icon = Icons.Outlined.Explore, selected = false, onClick = onExploreClick)
+            BottomNavItem(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false, onClick = onDonationsClick)
+            BottomNavItem(label = "Profile", icon = Icons.Outlined.Person, selected = false, onClick = onProfileClick)
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean) {
+private fun BottomNavItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Surface(color = background, shape = RoundedCornerShape(50)) {
+    Surface(color = background, shape = RoundedCornerShape(50), onClick = onClick) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -408,5 +473,49 @@ private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vect
             Icon(imageVector = icon, contentDescription = null, tint = contentColor)
             Text(text = label, style = MaterialTheme.typography.labelSmall, color = contentColor)
         }
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.material3.CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(message: String) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onErrorContainer
+        )
+    }
+}
+
+@Composable
+private fun EmptyState(message: String) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

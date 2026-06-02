@@ -115,9 +115,9 @@ fun RoleSelectionScreen(
             RoleCard(
                 title = "I am an Association",
                 description = "I represent a charitable organization and need support.",
-                isSelected = selectedRole == "charity",
+                isSelected = selectedRole == "association",
                 icon = Icons.Outlined.CorporateFare,
-                onClick = { selectedRole = "charity" }
+                onClick = { selectedRole = "association" }
             )
 
             Spacer(modifier = Modifier.height(20.dp))

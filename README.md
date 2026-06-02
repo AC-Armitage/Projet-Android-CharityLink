@@ -1,27 +1,24 @@
 # CharityLink
 
-CharityLink is an Android app that connects donors to charities and projects.
+CharityLink is an Android application designed to connect donors with charitable organizations.
 
-## Setup
+## Project Goal
+The purpose of this project is to provide a platform where donors can find verified charities and contribute to specific campaigns. It also provides tools for charitable organizations to manage their needs and track support.
 
-1. Open the project in Android Studio.
-2. Sync Gradle when prompted.
-3. Run the app on an emulator or device.
+## Core Functionality
 
-## Build
+### For Donors
+- Browse a list of verified charitable organizations.
+- View specific "Urgent Needs" or active campaigns.
+- Track personal donation history and campaign progress.
+- Sign in using Email or Google.
 
-- Debug build: `./gradlew assembleDebug`
-- Run tests: `./gradlew test`
+### For Associations
+- Manage an organization profile.
+- Create and publish specific campaigns (needs).
+- Track incoming donations through a dashboard.
 
-## Project structure
-
-- `app/` - Android application module
-- `design/` - Local design exports (ignored in git)
-
-## Branching
-
-We use a simple workflow:
-
-- `main` is always stable.
-- Create feature branches from `main`.
-- Open a PR for review before merging.
+## Technical Implementation
+- **UI:** Built entirely with Jetpack Compose using Material 3.
+- **Backend:** Uses Firebase Authentication for user management and Firestore for data storage.
+- **Architecture:** Follows the MVVM pattern with a Repository layer for data handling.
