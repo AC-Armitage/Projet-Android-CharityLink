@@ -24,7 +24,7 @@ object CharityLinkDestinations {
 }
 
 @Composable
-fun CharityLinkNavHost() {
+fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
 

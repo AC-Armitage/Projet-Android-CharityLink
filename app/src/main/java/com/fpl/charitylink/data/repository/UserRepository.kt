@@ -20,4 +20,14 @@ class UserRepository {
     suspend fun updateUser(uid: String, updates: Map<String, Any>) {
         users.document(uid).update(updates).await()
     }
+
+    // Sync latest user data from Firestore
+    suspend fun syncUser(uid: String): User? {
+        return try {
+            val doc = users.document(uid).get().await()
+            if (doc.exists()) doc.toObject(User::class.java) else null
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

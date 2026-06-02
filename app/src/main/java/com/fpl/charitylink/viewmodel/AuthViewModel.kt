@@ -1,10 +1,11 @@
 package com.fpl.charitylink.viewmodel
 
+import android.app.Application
 import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -12,12 +13,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import com.fpl.charitylink.data.local.UserPreferences
 import com.fpl.charitylink.data.model.User
 import com.fpl.charitylink.data.repository.UserRepository
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
@@ -25,31 +27,37 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val userRepository = UserRepository()
+    private val userPrefs = UserPreferences(application)
+
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
+    // Expose cached role as StateFlow
+    val cachedRole: StateFlow<String> = userPrefs.role
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "donor")
+
+    // Expose cached user data as StateFlow
+    val cachedUser: StateFlow<Map<String, String>> = userPrefs.userData
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
+
     val currentUser: FirebaseUser? get() = auth.currentUser
 
-    // --- Register with role ---
+    // --- Register ---
     fun register(email: String, password: String, fullName: String, role: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
                 val result = auth.createUserWithEmailAndPassword(email, password).await()
                 val user = result.user!!
-                userRepository.saveUser(
-                    User(
-                        uid = user.uid,
-                        fullName = fullName,
-                        email = email,
-                        role = role
-                    )
-                )
+                val newUser = User(uid = user.uid, fullName = fullName, email = email, role = role)
+                userRepository.saveUser(newUser)
+                // Cache locally
+                userPrefs.saveUser(user.uid, fullName, email, role, user.photoUrl?.toString())
                 _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Registration failed")
@@ -57,14 +65,23 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Login then fetch role ---
+    // --- Login ---
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
                 val user = result.user!!
-                val role = fetchRole(user.uid)
+                // Sync from Firestore and cache
+                val firestoreUser = userRepository.syncUser(user.uid)
+                val role = firestoreUser?.role ?: "donor"
+                userPrefs.saveUser(
+                    uid = user.uid,
+                    fullName = firestoreUser?.fullName ?: user.displayName ?: "",
+                    email = user.email ?: "",
+                    role = role,
+                    photoUrl = user.photoUrl?.toString()
+                )
                 _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Login failed")
@@ -72,7 +89,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Google Sign-In then fetch/create role ---
+    // --- Google Sign-In ---
     fun signInWithGoogle(context: Context, role: String = "donor") {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -91,23 +108,27 @@ class AuthViewModel : ViewModel() {
                 val authResult = auth.signInWithCredential(firebaseCredential).await()
                 val user = authResult.user!!
 
-                // Check if user already exists in Firestore
                 val doc = db.collection("users").document(user.uid).get().await()
                 val existingRole = if (doc.exists()) {
                     doc.getString("role") ?: role
                 } else {
-                    // New Google user — save to Firestore
-                    db.collection("users").document(user.uid).set(
-                        mapOf(
-                            "uid" to user.uid,
-                            "fullName" to (user.displayName ?: ""),
-                            "email" to (user.email ?: ""),
-                            "role" to role,
-                            "createdAt" to System.currentTimeMillis()
-                        )
-                    ).await()
+                    val newUser = User(
+                        uid = user.uid,
+                        fullName = user.displayName ?: "",
+                        email = user.email ?: "",
+                        role = role
+                    )
+                    userRepository.saveUser(newUser)
                     role
                 }
+                // Cache locally
+                userPrefs.saveUser(
+                    uid = user.uid,
+                    fullName = user.displayName ?: "",
+                    email = user.email ?: "",
+                    role = existingRole,
+                    photoUrl = user.photoUrl?.toString()
+                )
                 _authState.value = AuthState.Success(user, existingRole)
             } catch (e: GetCredentialException) {
                 _authState.value = AuthState.Error(e.message ?: "Google sign-in failed")
@@ -117,23 +138,44 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // --- Fetch role from Firestore ---
-    private suspend fun fetchRole(uid: String): String {
-        return userRepository.getUser(uid)?.role ?: "donor"
+    // --- Sync profile from Firestore (call on app start) ---
+    fun syncUserProfile() {
+        viewModelScope.launch {
+            val uid = auth.currentUser?.uid ?: return@launch
+            val user = userRepository.syncUser(uid) ?: return@launch
+            userPrefs.saveUser(
+                uid = user.uid,
+                fullName = user.fullName,
+                email = user.email,
+                role = user.role,
+                photoUrl = user.photoUrl
+            )
+        }
     }
 
-    // --- Fetch role for already logged in user ---
+    // --- Fetch role (used in NavHost) ---
     fun fetchCurrentUserRole(onResult: (String) -> Unit) {
         viewModelScope.launch {
             val uid = auth.currentUser?.uid ?: return@launch
-            val role = fetchRole(uid)
+            // Try cache first
+            val cached = cachedRole.value
+            if (cached.isNotEmpty()) {
+                onResult(cached)
+                return@launch
+            }
+            // Fallback to Firestore
+            val role = userRepository.syncUser(uid)?.role ?: "donor"
             onResult(role)
         }
     }
 
+    // --- Logout ---
     fun logout() {
-        auth.signOut()
-        _authState.value = AuthState.Idle
+        viewModelScope.launch {
+            userPrefs.clear()
+            auth.signOut()
+            _authState.value = AuthState.Idle
+        }
     }
 
     fun resetState() {
