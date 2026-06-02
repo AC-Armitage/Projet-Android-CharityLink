@@ -17,7 +17,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             CharityLinkTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    CharityLinkNavHost()
+                    val authViewModel: AuthViewModel = viewModel()
+                    // Sync profile in background on app start
+                    LaunchedEffect(Unit) {
+                        authViewModel.syncUserProfile()
+                    }
+                    CharityLinkNavHost(authViewModel = authViewModel)
                 }
             }
         }

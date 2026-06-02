@@ -1,6 +1,7 @@
 package com.fpl.charitylink.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,8 +61,13 @@ import com.fpl.charitylink.ui.theme.PrimaryFixedDim
 import com.fpl.charitylink.ui.theme.SurfaceContainerHigh
 import com.fpl.charitylink.ui.theme.SurfaceContainerLow
 import com.fpl.charitylink.ui.theme.SurfaceContainerLowest
+import com.fpl.charitylink.viewmodel.DonorHomeViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import java.util.Locale
+import kotlin.math.min
 
 private data class UrgentNeed(
+    val id: String,
     val title: String,
     val location: String,
     val description: String,
@@ -70,6 +77,7 @@ private data class UrgentNeed(
 )
 
 private data class AssociationItem(
+    val id: String,
     val name: String,
     val category: String,
     val location: String,
@@ -78,51 +86,45 @@ private data class AssociationItem(
 )
 
 @Composable
-fun DonorHomeScreen() {
-    val urgentNeeds = remember {
-        listOf(
-            UrgentNeed(
-                title = "Global Aid Network",
-                location = "Casablanca, Morocco",
-                description = "Crisis relief for families affected by the recent drought. Immediate food and water needed.",
-                raised = "$12,450",
-                progress = 0.75f,
-                imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBsh4FO-2sTWmLywnBFSR2pBxNf2dM13ZqTbi63lmuPz2I2i0qxnfMU9tqbk-m7BTlymurv-2e1RdNU6uW96tZot6tqsx2bwFGZ6LOJTi6M9sr7YxC5VGia3ZnWs-cSlouR2FcnmVByylBrcCR0XeR0hFFNRA5xmb67ej1tMwGRkLSZhrqJAVxzFVjIwgI7hM9NaGNd6C6VquJYqYyrlGG8LD0SUrRT2HO8FV27jihiRE5Z1Wvtp3VZN-wg3huSt6YiMR_a05F-Wvsu"
-            ),
-            UrgentNeed(
-                title = "EcoCare Foundation",
-                location = "Rabat, Morocco",
-                description = "Reforestation project to restore local ecosystems after forest fires.",
-                raised = "$4,200",
-                progress = 0.4f,
-                imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBWyNOcANsndy6gsEX_LJqrTjE2z3k4WK6XrBOBSJYzko-s1-2NjoY4sZMrxDaaWWEDJ4-mrzIAbLxuwqTdqsh_Crxc3icLR0gMTp9I8bZAnURMj4E1FqaxVK6mK_f9xmac9ZvGAZUbrzH72d3NC4FIR4cfZ9Idlh6QG2Pk2anmKvedqlOzqyMnSOo1fOSZvBO2_Ei9iI5swu3QAh1ZgC2aTyUzGnNnnJsgd2bhXFNepbk50nCD9SuYXAHaoC5hZULlQRNFHm0kWI0r"
-            )
+fun DonorHomeScreen(
+    onProfileClick: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    onExploreClick: () -> Unit = {},
+    onDonationsClick: () -> Unit = {},
+    onAssociationClick: (String) -> Unit = {},
+    onNeedClick: (String) -> Unit = {},
+    onDonateClick: () -> Unit = {}
+) {
+    val donorHomeViewModel: DonorHomeViewModel = viewModel()
+    val uiState by donorHomeViewModel.uiState.collectAsState()
+    val errorMessage = uiState.errorMessage
+
+    val urgentNeeds = uiState.urgentCampaigns.map { campaign ->
+        val progress = if (campaign.goalAmount > 0.0) {
+            min(1f, (campaign.raisedAmount / campaign.goalAmount).toFloat())
+        } else {
+            0f
+        }
+        val raised = String.format(Locale.getDefault(), "$%,.0f", campaign.raisedAmount)
+        UrgentNeed(
+            id = campaign.id,
+            title = campaign.title,
+            location = if (campaign.associationName.isNotBlank()) campaign.associationName else "Association",
+            description = campaign.description,
+            raised = raised,
+            progress = progress,
+            imageUrl = campaign.imageUrl ?: ""
         )
     }
 
-    val associations = remember {
-        listOf(
-            AssociationItem(
-                name = "Hearts For All",
-                category = "Humanitarian",
-                location = "Tangier, Morocco",
-                description = "Providing education and healthcare to underserved youth.",
-                imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuDbv7dCsVCSwwyodtU63jfUpMQyRrFZQVzP-zi8WTgb53b-7m4tF17OU9A_vknqhCW4YJxOidBjwWoqDZgdLooOIHED3WaNuiMZxGdgVI-866c1tZDOeFBbOesfDyI04SgdhMr8CPhPfYSQzqyAfYHLkzZcTFrQq09sTnP3AvYpShhyMlKO5imMiA7gplG6yom4EVY1BFl-bW2pRgvPpAYKsf0OPFJbG3ys_gylveJyJfk5Df7sFPXCiVaTHEqCo-EeBELbbj5LfRTi"
-            ),
-            AssociationItem(
-                name = "Green Roots",
-                category = "Environment",
-                location = "Ifrane, Morocco",
-                description = "Protecting national parks and promoting sustainable farming.",
-                imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuCMMrQjbtrvYhVbrRiuVYUZgdhSWNblc2RB8zR54TP5sdJOuxhomMA9pK7AiP29eY8MEVYiPq3bpWnoxn899KNfKsoAABCK5jeR7v-nZ3S5T98etXq6jtOtXTv-TGnKi3wASnxTFadx2FmzF7XD7xZGMljFZcrhxM0YqfCRGBFMnOjaV0nuZlCv-947B8vMcwlHzDhNt-k3j1W2vQ_MkUrIOxF2vQ0IGBmkMXPA6upmVJp64HpyY99-4TYgarccarwCUYI9V3hcXIgA"
-            ),
-            AssociationItem(
-                name = "Medi-Care Morocco",
-                category = "Health",
-                location = "Marrakech, Morocco",
-                description = "Mobile clinics providing free medical checkups in rural areas.",
-                imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuCRn5pdgTY1X2szsYA5zBVpnzksCbVN-QOAaw_cy1J8fd5m6YjFXR_jaBk2U_JU08ztF9TlW-v1WFx4qSyN7SEztUaG2Z_hEu_RYvvBFpz4tg7uWjSi43mgIpdXDU32FxN3HbeCVIvIN273buv3Bph3FH2XAyTw65hziOt9gee3VoX7l9Li5RtUmuEETCBZEigaBH-BC0S35tVheUnXYL9_GEd9I9DkIt618sxtIgD7JEHRw9g9MhgigON8R3SsNcFWjpIxEgeN5YWA"
-            )
+    val associations = uiState.organizations.map { org ->
+        AssociationItem(
+            id = org.uid,
+            name = org.name,
+            category = if (org.verified) "Verified" else "Organization",
+            location = org.address ?: "Location not set",
+            description = org.description ?: "No description yet.",
+            imageUrl = org.logoUrl ?: ""
         )
     }
 
@@ -130,8 +132,14 @@ fun DonorHomeScreen() {
 
     Scaffold(
         topBar = { DonorTopBar() },
-        bottomBar = { DonorBottomBar() },
-        floatingActionButton = { DonateFab() },
+        bottomBar = {
+            DonorBottomBar(
+                onProfileClick = onProfileClick,
+                onExploreClick = onExploreClick,
+                onDonationsClick = onDonationsClick
+            )
+        },
+        floatingActionButton = { DonateFab(onClick = onDonateClick) },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
@@ -188,10 +196,24 @@ fun DonorHomeScreen() {
                 SectionHeader(title = "Urgent Needs", action = "See all")
             }
 
+            if (uiState.isLoading) {
+                item {
+                    LoadingState()
+                }
+            } else if (errorMessage != null) {
+                item {
+                    ErrorState(message = errorMessage, onRetry = { donorHomeViewModel.refresh() })
+                }
+            }
+
             item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(urgentNeeds) { need ->
-                        UrgentNeedCard(need)
+                if (urgentNeeds.isEmpty() && !uiState.isLoading) {
+                    EmptyState(message = "No urgent campaigns yet.")
+                } else {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        items(urgentNeeds) { need ->
+                            UrgentNeedCard(need = need, onClick = { onNeedClick(need.id) })
+                        }
                     }
                 }
             }
@@ -222,10 +244,68 @@ fun DonorHomeScreen() {
                 }
             }
 
-            items(associations) { association ->
-                AssociationCard(association)
+            if (associations.isEmpty() && !uiState.isLoading) {
+                item {
+                    EmptyState(message = "No associations available yet.")
+                }
+            } else {
+                items(associations) { association ->
+                    AssociationCard(
+                        association = association,
+                        onViewClick = { onAssociationClick(association.id) }
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(message: String, onRetry: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(onClick = onRetry) {
+                Text(text = "Retry")
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(message: String) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -295,13 +375,14 @@ private fun SectionHeader(title: String, action: String) {
 }
 
 @Composable
-private fun UrgentNeedCard(need: UrgentNeed) {
+private fun UrgentNeedCard(need: UrgentNeed, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(280.dp)
             .height(380.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        onClick = onClick
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -412,7 +493,7 @@ private fun UrgentNeedCard(need: UrgentNeed) {
 }
 
 @Composable
-private fun AssociationCard(association: AssociationItem) {
+private fun AssociationCard(association: AssociationItem, onViewClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest)
@@ -482,7 +563,7 @@ private fun AssociationCard(association: AssociationItem) {
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(
-                onClick = { },
+                onClick = onViewClick,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
@@ -493,9 +574,9 @@ private fun AssociationCard(association: AssociationItem) {
 }
 
 @Composable
-private fun DonateFab() {
+private fun DonateFab(onClick: () -> Unit) {
     Button(
-        onClick = { },
+        onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         shape = RoundedCornerShape(18.dp)
     ) {
@@ -514,29 +595,44 @@ private fun DonateFab() {
 }
 
 @Composable
-private fun DonorBottomBar() {
+private fun DonorBottomBar(
+    onProfileClick: () -> Unit,
+    onExploreClick: () -> Unit,
+    onDonationsClick: () -> Unit
+) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(label = "Home", icon = Icons.Outlined.Home, selected = true)
-            BottomNavItem(label = "Explore", icon = Icons.Outlined.Explore, selected = false)
-            BottomNavItem(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false)
-            BottomNavItem(label = "Profile", icon = Icons.Outlined.Person, selected = false)
+            BottomNavItem(label = "Home", icon = Icons.Outlined.Home, selected = true, onClick = {})
+            BottomNavItem(label = "Explore", icon = Icons.Outlined.Explore, selected = false, onClick = onExploreClick)
+            BottomNavItem(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false, onClick = onDonationsClick)
+            BottomNavItem(label = "Profile", icon = Icons.Outlined.Person, selected = false, onClick = onProfileClick)
         }
     }
+
 }
 
 @Composable
-private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean) {
+private fun BottomNavItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit = {}
+) {
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
 
-    Surface(color = background, shape = RoundedCornerShape(50)) {
+    Surface(
+        color = background,
+        shape = RoundedCornerShape(50),
+        onClick = onClick
+    ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -546,3 +642,5 @@ private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vect
         }
     }
 }
+
+
