@@ -29,7 +29,7 @@ class ExploreViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val orgs = organizationRepository.getAllOrganizations()
+                val orgs = organizationRepository.getAllOrganizations() // now returns all
                 _uiState.value = ExploreUiState(
                     isLoading = false,
                     organizations = orgs,

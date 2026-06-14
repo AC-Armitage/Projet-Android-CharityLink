@@ -19,9 +19,17 @@ class OrganizationRepository {
 
     suspend fun getAllOrganizations(): List<Organization> {
         return organizations
+            .get().await()
+            .toObjects(Organization::class.java)
+            .sortedBy { it.name }
+    }
+
+    suspend fun getVerifiedOrganizations(): List<Organization> {
+        return organizations
             .whereEqualTo("verified", true)
             .get().await()
             .toObjects(Organization::class.java)
+            .sortedBy { it.name }
     }
     suspend fun updateOrganization(uid: String, updates: Map<String, Any>) {
         organizations.document(uid).update(updates).await()
