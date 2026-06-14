@@ -22,7 +22,56 @@ class NotificationRepository {
             .get().await()
             .toObjects(Notification::class.java)
     }
+    suspend fun createDonationNotification(
+        associationId: String,
+        donorName: String,
+        amount: Double,
+        campaignTitle: String
+    ) {
+        createNotification(
+            Notification(
+                userId = associationId,
+                title = "New donation received!",
+                message = "$donorName donated $${"%.2f".format(amount)} to your '$campaignTitle' campaign.",
+                type = "donation",
+                read = false,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
 
+    suspend fun createCampaignFulfilledNotification(
+        associationId: String,
+        campaignTitle: String
+    ) {
+        createNotification(
+            Notification(
+                userId = associationId,
+                title = "Campaign goal reached! 🎉",
+                message = "Your campaign '$campaignTitle' has reached 100% of its goal!",
+                type = "campaign",
+                read = false,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun createNewNeedNotification(
+        donorId: String,
+        associationName: String,
+        campaignTitle: String
+    ) {
+        createNotification(
+            Notification(
+                userId = donorId,
+                title = "New campaign posted",
+                message = "$associationName posted a new need: '$campaignTitle'",
+                type = "campaign",
+                read = false,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
     suspend fun markAsRead(notificationId: String) {
         notifications.document(notificationId)
             .update("read", true)
