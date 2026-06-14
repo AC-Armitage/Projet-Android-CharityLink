@@ -30,4 +30,14 @@ class UserRepository {
             null
         }
     }
+    suspend fun getAllDonors(): List<User> {
+        return try {
+            db.collection("users")
+                .whereEqualTo("role", "donor")
+                .get().await()
+                .toObjects(User::class.java)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }

@@ -2,54 +2,16 @@ package com.fpl.charitylink.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.AssignmentLate
-import androidx.compose.material.icons.outlined.Checkroom
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Explore
-import androidx.compose.material.icons.outlined.Fastfood
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.VolunteerActivism
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fpl.charitylink.ui.theme.SurfaceContainerHigh
 import com.fpl.charitylink.ui.theme.SurfaceContainerHighest
@@ -83,13 +46,17 @@ fun AssociationHomeScreen(
     onExploreClick: () -> Unit = {},
     onDonationsClick: () -> Unit = {},
     onPostNeedClick: () -> Unit = {},
-    onNeedClick: (String) -> Unit = {}
+    onNeedClick: (String) -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
+    onEditNeedClick: (String) -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val associationHomeViewModel: AssociationHomeViewModel = viewModel()
     val uiState by associationHomeViewModel.uiState.collectAsState()
     val associationId = authViewModel.currentUser?.uid
     val errorMessage = uiState.errorMessage
+
+    var campaignToDelete by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(associationId) {
         associationHomeViewModel.load(associationId)
@@ -104,24 +71,16 @@ fun AssociationHomeScreen(
             "active" -> colorScheme.secondary
             else -> colorScheme.primary
         }
-        val progress = if (campaign.goalAmount > 0.0) {
-            min(1f, (campaign.raisedAmount / campaign.goalAmount).toFloat())
-        } else {
-            0f
-        }
+        val progress = if (campaign.goalAmount > 0.0)
+            min(1f, (campaign.raisedAmount / campaign.goalAmount).toFloat()) else 0f
         val raised = String.format(Locale.getDefault(), "%,.0f", campaign.raisedAmount)
         val goal = String.format(Locale.getDefault(), "%,.0f", campaign.goalAmount)
-        val progressLabel = if (campaign.goalAmount > 0.0) {
-            "$raised / $goal"
-        } else {
-            "No goal set"
-        }
+        val progressLabel = if (campaign.goalAmount > 0.0) "$raised / $goal" else "No goal set"
         val icon = when (campaign.category.lowercase()) {
             "food" -> Icons.Outlined.Fastfood
             "clothes" -> Icons.Outlined.Checkroom
             else -> Icons.Outlined.Payments
         }
-
         NeedItem(
             id = campaign.id,
             title = campaign.title,
@@ -133,8 +92,29 @@ fun AssociationHomeScreen(
         )
     }
 
+    // Delete confirmation dialog
+    if (campaignToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { campaignToDelete = null },
+            title = { Text("Delete Campaign") },
+            text = { Text("Are you sure you want to delete this campaign? This cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        associationHomeViewModel.deleteCampaign(campaignToDelete!!)
+                        campaignToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { campaignToDelete = null }) { Text("Cancel") }
+            }
+        )
+    }
+
     Scaffold(
-        topBar = { AssociationTopBar() },
+        topBar = { AssociationTopBar(onNotificationsClick = onNotificationsClick) },
         bottomBar = {
             AssociationBottomBar(
                 onProfileClick = onProfileClick,
@@ -146,25 +126,22 @@ fun AssociationHomeScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
             contentPadding = PaddingValues(bottom = 96.dp, top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item {
-                SummaryGrid(activeNeeds = needs.size)
+                SummaryGrid(
+                    activeNeeds = needs.size,
+                    totalDonations = uiState.totalDonations,
+                    donorsCount = uiState.donorsCount
+                )
             }
 
             if (uiState.isLoading) {
-                item {
-                    LoadingState()
-                }
+                item { LoadingState() }
             } else if (errorMessage != null) {
-                item {
-                    ErrorState(message = errorMessage)
-                }
+                item { ErrorState(message = errorMessage) }
             }
 
             item {
@@ -183,12 +160,15 @@ fun AssociationHomeScreen(
             }
 
             if (needs.isEmpty() && !uiState.isLoading) {
-                item {
-                    EmptyState(message = "No needs yet. Create your first campaign.")
-                }
+                item { EmptyState(message = "No needs yet. Create your first campaign.") }
             } else {
                 items(needs) { need ->
-                    NeedCard(need = need, onClick = { onNeedClick(need.id) })
+                    NeedCard(
+                        need = need,
+                        onClick = { onNeedClick(need.id) },
+                        onEditClick = { onEditNeedClick(need.id) },
+                        onDeleteClick = { campaignToDelete = need.id }
+                    )
                 }
             }
         }
@@ -196,10 +176,11 @@ fun AssociationHomeScreen(
 }
 
 @Composable
-private fun AssociationTopBar() {
+private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(64.dp)
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp),
@@ -207,15 +188,20 @@ private fun AssociationTopBar() {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = "https://lh3.googleusercontent.com/aida-public/AB6AXuCrJiaQRGqtHREMBFC8F2ZorbkCZOocDB7KLlUkHvU6ZM5XzcJRZZbZmmB8KWtn4JncVFC9DWiKc10vgknUa5x6hzzQFCnPQbCOpJhhsIW9SQflTShuc6D1RyW-9bgpHNZzuMWe_nwKW8ZfJByIbsmjE0hPbSezWPBUyqxyugUukmXtcidOgVlGvTlhDs0PXK3QI2bZYncrvJmUMYvwMdCWUQcNhL-W9c174heqMM8bvGS2e16DodmLCUP2eiR52pFK5KGsurYOnU1Q",
-                contentDescription = null,
+            Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                contentScale = ContentScale.Crop
-            )
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.VolunteerActivism,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "CharityLink",
@@ -224,96 +210,51 @@ private fun AssociationTopBar() {
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = null,
-                    modifier = Modifier.padding(10.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                onClick = onNotificationsClick
+            ) {
+                Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                Icon(
-                    imageVector = Icons.Outlined.Settings,
-                    contentDescription = null,
-                    modifier = Modifier.padding(10.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
 
 @Composable
-private fun SummaryGrid(activeNeeds: Int) {
+private fun SummaryGrid(activeNeeds: Int, totalDonations: Double = 0.0, donorsCount: Int = 0) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Total Donations",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Icon(
-                        imageVector = Icons.Outlined.Payments,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(text = "Total Donations", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Icon(Icons.Outlined.Payments, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "$12,840.00",
+                    text = String.format(Locale.getDefault(), "$%,.2f", totalDonations),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-                Text(
-                    text = "+14% from last month",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                )
+                Text(text = "Total received donations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
             }
         }
-
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SummaryCard(
-                label = "Active Needs",
-                value = activeNeeds.toString(),
-                icon = Icons.Outlined.AssignmentLate,
-                tint = MaterialTheme.colorScheme.secondary
-            )
-            SummaryCard(
-                label = "Donors",
-                value = "158",
-                icon = Icons.Outlined.Groups,
-                tint = MaterialTheme.colorScheme.tertiary
-            )
+            SummaryCard(label = "Active Needs", value = activeNeeds.toString(), icon = Icons.Outlined.AssignmentLate, tint = MaterialTheme.colorScheme.secondary)
+            SummaryCard(label = "Donors", value = donorsCount.toString(), icon = Icons.Outlined.Groups, tint = MaterialTheme.colorScheme.tertiary)
         }
     }
 }
 
 @Composable
-private fun RowScope.SummaryCard(
-    label: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    tint: Color
-) {
-    Card(
-        modifier = Modifier.weight(1f),
-        colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh),
-        shape = RoundedCornerShape(16.dp)
-    ) {
+private fun RowScope.SummaryCard(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color) {
+    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = SurfaceContainerHigh), shape = RoundedCornerShape(16.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Icon(imageVector = icon, contentDescription = null, tint = tint)
             Spacer(modifier = Modifier.height(8.dp))
@@ -324,89 +265,62 @@ private fun RowScope.SummaryCard(
 }
 
 @Composable
-private fun NeedCard(need: NeedItem, onClick: () -> Unit) {
+private fun NeedCard(
+    need: NeedItem,
+    onClick: () -> Unit,
+    onEditClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {}
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
         shape = RoundedCornerShape(16.dp),
         onClick = onClick
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(need.statusColor.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+                        modifier = Modifier.size(48.dp).background(need.statusColor.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = need.icon,
-                            contentDescription = null,
-                            tint = need.statusColor
-                        )
+                        Icon(imageVector = need.icon, contentDescription = null, tint = need.statusColor)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(text = need.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .background(need.statusColor, CircleShape)
-                            )
+                            Box(modifier = Modifier.size(8.dp).background(need.statusColor, CircleShape))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = need.status,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = need.statusColor
-                            )
+                            Text(text = need.status, style = MaterialTheme.typography.labelSmall, color = need.statusColor)
                         }
                     }
                 }
                 Row {
                     Icon(
                         imageVector = Icons.Outlined.Edit,
-                        contentDescription = null,
+                        contentDescription = "Edit",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(4.dp)
+                        modifier = Modifier.padding(4.dp).clickable { onEditClick() }
                     )
                     Icon(
                         imageVector = Icons.Outlined.Delete,
-                        contentDescription = null,
+                        contentDescription = "Delete",
                         tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(4.dp)
+                        modifier = Modifier.padding(4.dp).clickable { onDeleteClick() }
                     )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = need.progressLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "${(need.progress * 100).toInt()}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = need.progressLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "${(need.progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(6.dp))
             LinearProgressIndicator(
                 progress = { need.progress },
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = SurfaceContainerHighest,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(50))
+                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50))
             )
         }
     }
@@ -414,36 +328,18 @@ private fun NeedCard(need: NeedItem, onClick: () -> Unit) {
 
 @Composable
 private fun PostNeedFab(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        shape = RoundedCornerShape(50),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Add,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+    Button(onClick = onClick, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Icon(Icons.Outlined.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Post a Need",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        Text(text = "Post a Need", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 
 @Composable
-private fun AssociationBottomBar(
-    onProfileClick: () -> Unit,
-    onExploreClick: () -> Unit,
-    onDonationsClick: () -> Unit
-) {
+private fun AssociationBottomBar(onProfileClick: () -> Unit, onExploreClick: () -> Unit, onDonationsClick: () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -456,20 +352,11 @@ private fun AssociationBottomBar(
 }
 
 @Composable
-private fun BottomNavItem(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
+private fun BottomNavItem(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean, onClick: () -> Unit) {
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-
     Surface(color = background, shape = RoundedCornerShape(50), onClick = onClick) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(imageVector = icon, contentDescription = null, tint = contentColor)
             Text(text = label, style = MaterialTheme.typography.labelSmall, color = contentColor)
         }
@@ -478,44 +365,21 @@ private fun BottomNavItem(
 
 @Composable
 private fun LoadingState() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        androidx.compose.material3.CircularProgressIndicator()
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
     }
 }
 
 @Composable
 private fun ErrorState(message: String) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onErrorContainer
-        )
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(text = message, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
     }
 }
 
 @Composable
 private fun EmptyState(message: String) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    Card(colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+        Text(text = message, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

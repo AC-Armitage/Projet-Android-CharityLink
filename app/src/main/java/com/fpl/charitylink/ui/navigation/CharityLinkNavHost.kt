@@ -27,6 +27,11 @@ object CharityLinkDestinations {
     const val NEED_DETAIL = "need_detail"
     const val POST_NEED = "post_need"
     const val PROFILE = "profile"
+    const val EDIT_PROFILE = "edit_profile"
+    const val SETTINGS = "settings"
+    const val ALL_CAMPAIGNS = "all_campaigns"
+    const val NOTIFICATIONS = "notifications"
+    const val EDIT_NEED = "edit_need"
 }
 
 @Composable
@@ -87,6 +92,14 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 }
             )
         }
+        composable("${CharityLinkDestinations.EDIT_NEED}/{campaignId}") { backStackEntry ->
+            val campaignId = backStackEntry.arguments?.getString("campaignId") ?: ""
+            PostNeedScreen(
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() },
+                campaignId = campaignId
+            )
+        }
         composable("${CharityLinkDestinations.LOGIN}/{role}") { backStackEntry ->
             val role = backStackEntry.arguments?.getString("role") ?: "donor"
             LoginScreen(
@@ -112,6 +125,8 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
         composable(CharityLinkDestinations.DONOR_HOME) {
             DonorHomeScreen(
                 onProfileClick = { navController.navigate(CharityLinkDestinations.PROFILE) },
+                onSeeAllClick = { navController.navigate(CharityLinkDestinations.ALL_CAMPAIGNS) },
+                onNotificationsClick = { navController.navigate(CharityLinkDestinations.NOTIFICATIONS) },
                 onExploreClick = { navController.navigate(CharityLinkDestinations.DONOR_EXPLORE) },
                 onDonationsClick = { navController.navigate(CharityLinkDestinations.DONOR_DONATIONS) },
                 onAssociationClick = { associationId ->
@@ -125,13 +140,18 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                     authViewModel.logout()
                     navController.navigate(CharityLinkDestinations.LOGIN + "/donor") { popUpTo(0) }
                 }
+
             )
         }
         composable(CharityLinkDestinations.ASSOCIATION_HOME) {
             AssociationHomeScreen(
                 authViewModel = authViewModel,
                 onProfileClick = { navController.navigate(CharityLinkDestinations.PROFILE) },
+                onEditNeedClick = { campaignId ->
+                    navController.navigate("${CharityLinkDestinations.EDIT_NEED}/$campaignId")
+                },
                 onExploreClick = { navController.navigate(CharityLinkDestinations.DONOR_EXPLORE) },
+                onNotificationsClick = { navController.navigate(CharityLinkDestinations.NOTIFICATIONS) },
                 onDonationsClick = { navController.navigate(CharityLinkDestinations.ASSOCIATION_DONATIONS) },
                 onPostNeedClick = { navController.navigate(CharityLinkDestinations.POST_NEED) },
                 onNeedClick = { needId ->
@@ -187,12 +207,50 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
             )
         }
         composable(CharityLinkDestinations.PROFILE) {
+            val role = authViewModel.cachedRole.collectAsState().value
+
             ProfileScreen(
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(CharityLinkDestinations.LOGIN + "/donor") { popUpTo(0) }
                 },
+                onEditProfile = { navController.navigate(CharityLinkDestinations.EDIT_PROFILE) },
+                onSettings = { navController.navigate(CharityLinkDestinations.SETTINGS) },
+                onHomeClick = {
+                    val destination = if (role == "association")
+                        CharityLinkDestinations.ASSOCIATION_HOME
+                    else
+                        CharityLinkDestinations.DONOR_HOME
+                    navController.navigate(destination) { popUpTo(0) }
+                },
+                onExploreClick = { /* TODO */ },
+                onDonationsClick = { /* TODO */ },
                 authViewModel = authViewModel
+            )
+        }
+        composable(CharityLinkDestinations.EDIT_PROFILE) {
+            EditProfileScreen(
+                onBack = { navController.popBackStack() },
+                authViewModel = authViewModel
+            )
+        }
+        composable(CharityLinkDestinations.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                authViewModel = authViewModel
+            )
+        }
+        composable(CharityLinkDestinations.ALL_CAMPAIGNS) {
+            AllCampaignsScreen(
+                onBack = { navController.popBackStack() },
+                onCampaignClick = { campaignId ->
+                    // TODO: navigate to campaign detail
+                }
+            )
+        }
+        composable(CharityLinkDestinations.NOTIFICATIONS) {
+            NotificationsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

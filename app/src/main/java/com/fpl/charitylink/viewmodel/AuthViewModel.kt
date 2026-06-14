@@ -19,6 +19,8 @@ import com.fpl.charitylink.data.repository.UserRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.fpl.charitylink.data.model.Organization
+import com.fpl.charitylink.data.repository.OrganizationRepository
 
 sealed class AuthState {
     object Idle : AuthState()
@@ -33,7 +35,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val db = FirebaseFirestore.getInstance()
     private val userRepository = UserRepository()
     private val userPrefs = UserPreferences(application)
-
+    private val organizationRepository = OrganizationRepository()
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
@@ -54,9 +56,23 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val result = auth.createUserWithEmailAndPassword(email, password).await()
                 val user = result.user!!
+
+                // Save to users collection
                 val newUser = User(uid = user.uid, fullName = fullName, email = email, role = role)
                 userRepository.saveUser(newUser)
-                // Cache locally
+
+                // If association, also save to organizations collection
+                if (role == "association") {
+                    val org = Organization(
+                        uid = user.uid,
+                        name = fullName,
+                        email = email,
+                        verified = false,
+                        createdAt = System.currentTimeMillis()
+                    )
+                    organizationRepository.saveOrganization(org)
+                }
+
                 userPrefs.saveUser(user.uid, fullName, email, role, user.photoUrl?.toString())
                 _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
@@ -112,6 +128,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val existingRole = if (doc.exists()) {
                     doc.getString("role") ?: role
                 } else {
+                    // New Google user — save to Firestore
                     val newUser = User(
                         uid = user.uid,
                         fullName = user.displayName ?: "",
@@ -119,6 +136,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         role = role
                     )
                     userRepository.saveUser(newUser)
+                    // If association, also save to organizations collection
+                    if (role == "association") {
+                        val org = Organization(
+                            uid = user.uid,
+                            name = user.displayName ?: "",
+                            email = user.email ?: "",
+                            verified = false,
+                            createdAt = System.currentTimeMillis()
+                        )
+                        organizationRepository.saveOrganization(org)
+                    }
                     role
                 }
                 // Cache locally
