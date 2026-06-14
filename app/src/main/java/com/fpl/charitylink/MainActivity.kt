@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fpl.charitylink.ui.theme.CharityLinkTheme
 import com.fpl.charitylink.ui.navigation.CharityLinkNavHost
 import com.fpl.charitylink.viewmodel.AuthViewModel
+import androidx.compose.foundation.layout.systemBarsPadding
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,9 +20,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CharityLinkTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .systemBarsPadding(), // ← add this — handles both top and bottom
+
+                ) {
                     val authViewModel: AuthViewModel = viewModel()
-                    // Sync profile in background on app start
                     LaunchedEffect(Unit) {
                         authViewModel.syncUserProfile()
                     }
@@ -31,3 +36,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+

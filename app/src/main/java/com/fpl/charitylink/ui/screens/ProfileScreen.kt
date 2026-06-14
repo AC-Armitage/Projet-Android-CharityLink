@@ -28,6 +28,11 @@ import androidx.compose.material.icons.automirrored.outlined.*
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
+    onEditProfile: () -> Unit = {},
+    onSettings: () -> Unit = {},
+    onHomeClick: () -> Unit = {},       // ← add
+    onExploreClick: () -> Unit = {},    // ← add
+    onDonationsClick: () -> Unit = {},  // ← add
     authViewModel: AuthViewModel = viewModel()
 ) {
     val cachedUser by authViewModel.cachedUser.collectAsState()
@@ -42,10 +47,15 @@ fun ProfileScreen(
     val photoUrl = cachedUser["photoUrl"]?.ifBlank { null }
         ?: firebaseUser?.photoUrl?.toString()
     val role = cachedUser["role"] ?: "donor"
-
     Scaffold(
         topBar = { ProfileTopBar(photoUrl) },
-        bottomBar = { ProfileBottomBar() }
+        bottomBar = {
+            ProfileBottomBar(
+                onHomeClick = onHomeClick,
+                onExploreClick = onExploreClick,
+                onDonationsClick = onDonationsClick
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -102,7 +112,7 @@ fun ProfileScreen(
                 icon = Icons.Outlined.Edit,
                 title = "Edit Profile",
                 subtitle = "Change your name or profile picture",
-                onClick = { /* TODO */ }
+                onClick = onEditProfile
             )
             Spacer(modifier = Modifier.height(8.dp))
             ProfileMenuItem(
@@ -116,7 +126,7 @@ fun ProfileScreen(
                 icon = Icons.Outlined.Settings,
                 title = "Settings",
                 subtitle = "App preferences and account security",
-                onClick = { /* TODO */ }
+                onClick = onSettings
             )
             Spacer(modifier = Modifier.height(8.dp))
             ProfileMenuItem(
@@ -223,27 +233,42 @@ private fun ProfileTopBar(photoUrl: String?) {
 }
 
 @Composable
-private fun ProfileBottomBar() {
+private fun ProfileBottomBar(
+    onHomeClick: () -> Unit = {},
+    onExploreClick: () -> Unit = {},
+    onDonationsClick: () -> Unit = {}
+) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItemProfile(label = "Home", icon = Icons.Outlined.Home, selected = false)
-            BottomNavItemProfile(label = "Explore", icon = Icons.Outlined.Explore, selected = false)
-            BottomNavItemProfile(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false)
-            BottomNavItemProfile(label = "Profile", icon = Icons.Outlined.Person, selected = true)
+            BottomNavItemProfile(label = "Home", icon = Icons.Outlined.Home, selected = false, onClick = onHomeClick)
+            BottomNavItemProfile(label = "Explore", icon = Icons.Outlined.Explore, selected = false, onClick = onExploreClick)
+            BottomNavItemProfile(label = "Donations", icon = Icons.Outlined.VolunteerActivism, selected = false, onClick = onDonationsClick)
+            BottomNavItemProfile(label = "Profile", icon = Icons.Outlined.Person, selected = true, onClick = {})
         }
     }
 }
 
 @Composable
-private fun BottomNavItemProfile(label: String, icon: ImageVector, selected: Boolean) {
+private fun BottomNavItemProfile(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit = {}
+) {
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-    Surface(color = background, shape = RoundedCornerShape(50)) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Surface(color = background, shape = RoundedCornerShape(50), onClick = onClick) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Icon(imageVector = icon, contentDescription = null, tint = contentColor)
             Text(text = label, style = MaterialTheme.typography.labelSmall, color = contentColor)
         }
