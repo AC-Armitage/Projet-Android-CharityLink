@@ -22,6 +22,7 @@ import com.fpl.charitylink.viewmodel.PostNeedViewModel
 fun PostNeedScreen(
     onBack: () -> Unit,
     onSuccess: () -> Unit,
+    campaignId: String? = null, // ← add this
     viewModel: PostNeedViewModel = viewModel()
 ) {
     var title by remember { mutableStateOf("") }
