@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,27 +50,67 @@ fun DonationsScreen(
             )
         }
     ) { innerPadding ->
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) { CircularProgressIndicator() }
             }
-        } else if (uiState.errorMessage != null) {
-            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text(text = uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+            uiState.errorMessage != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (uiState.donations.isEmpty()) {
-                    item {
-                        EmptyDonationsState(isAssociation)
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Summary card at top
+                    if (uiState.donations.isNotEmpty()) {
+                        item {
+                            val total = uiState.donations.sumOf { it.amount }
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = if (isAssociation) "Total Received" else "Total Donated",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = String.format(Locale.getDefault(), "$%,.2f", total),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = "${uiState.donations.size} transaction${if (uiState.donations.size != 1) "s" else ""}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
+                        }
                     }
-                } else {
-                    items(uiState.donations) { donation ->
-                        DonationItemCard(donation, isAssociation)
+
+                    // Empty state
+                    if (uiState.donations.isEmpty()) {
+                        item { EmptyDonationsState(isAssociation) }
+                    } else {
+                        items(uiState.donations) { donation ->
+                            DonationItemCard(donation, isAssociation)
+                        }
                     }
                 }
             }
@@ -85,11 +126,13 @@ fun DonationItemCard(donation: Donation, isAssociation: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Surface(
                 modifier = Modifier.size(48.dp),
@@ -109,19 +152,41 @@ fun DonationItemCard(donation: Donation, isAssociation: Boolean) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isAssociation) "Donation from Donor" else "Donation to Association",
+                    text = if (isAssociation)
+                        "From: ${donation.donorName.ifBlank { "Anonymous" }}"
+                    else
+                        "To: ${donation.campaignTitle.ifBlank { "Campaign" }}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = if (isAssociation)
+                        donation.campaignTitle.ifBlank { "Campaign" }
+                    else
+                        "Association",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = date,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (!donation.message.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "\"${donation.message}\"",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontStyle = FontStyle.Italic
+                    )
+                }
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
             Text(
-                text = String.format(Locale.getDefault(), "$%,.2f", donation.amount ?: 0.0),
+                text = String.format(Locale.getDefault(), "$%,.2f", donation.amount),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -145,7 +210,7 @@ fun EmptyDonationsState(isAssociation: Boolean) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = if (isAssociation) "No donations received yet." else "You haven\u0027t made any donations yet.",
+            text = if (isAssociation) "No donations received yet." else "You haven't made any donations yet.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
