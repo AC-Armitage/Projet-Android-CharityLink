@@ -1,7 +1,6 @@
 package com.fpl.charitylink.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.fpl.charitylink.data.model.Donation
 import kotlinx.coroutines.tasks.await
 
@@ -19,29 +18,28 @@ class DonationRepository {
     suspend fun getDonorDonations(donorId: String): List<Donation> {
         return donations
             .whereEqualTo("donorId", donorId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .get().await()
             .toObjects(Donation::class.java)
+            .sortedByDescending { it.createdAt }
     }
 
     suspend fun getCampaignDonations(campaignId: String): List<Donation> {
         return donations
             .whereEqualTo("campaignId", campaignId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .get().await()
             .toObjects(Donation::class.java)
+            .sortedByDescending { it.createdAt }
     }
 
     suspend fun getAssociationDonations(associationId: String): List<Donation> {
         return donations
             .whereEqualTo("associationId", associationId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .get().await()
             .toObjects(Donation::class.java)
+            .sortedByDescending { it.createdAt }
     }
 
-    // Keep the more descriptive name if needed elsewhere, but for now we use getAssociationDonations
-    suspend fun getCampaignDonationsByAssociation(associationId: String): List<Donation> = 
+    suspend fun getCampaignDonationsByAssociation(associationId: String): List<Donation> =
         getAssociationDonations(associationId)
 
     suspend fun getTotalDonatedByUser(donorId: String): Double {
