@@ -1,5 +1,6 @@
 package com.fpl.charitylink.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fpl.charitylink.data.model.Campaign
@@ -8,9 +9,12 @@ import com.fpl.charitylink.data.repository.NotificationRepository
 import com.fpl.charitylink.data.repository.OrganizationRepository
 import com.fpl.charitylink.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
 
 data class PostNeedUiState(
     val isLoading: Boolean = false,
@@ -24,6 +28,7 @@ class PostNeedViewModel : ViewModel() {
     private val organizationRepository = OrganizationRepository()
     private val notificationRepository = NotificationRepository()
     private val userRepository = UserRepository()
+    private val storage = FirebaseStorage.getInstance()
     private val auth = try { FirebaseAuth.getInstance() } catch (e: Exception) { null }
 
     private val _uiState = MutableStateFlow(PostNeedUiState())
@@ -46,6 +51,7 @@ class PostNeedViewModel : ViewModel() {
         description: String,
         goalAmount: Double,
         category: String,
+        selectedImageUri: Uri? = null,
         imageUrl: String? = null
     ) {
         val currentUser = auth?.currentUser ?: return
@@ -53,6 +59,17 @@ class PostNeedViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
                 val existing = _uiState.value.existingCampaign
+                val finalImageUrl = when {
+                    selectedImageUri != null -> uploadCampaignImage(
+                        associationId = currentUser.uid,
+                        campaignId = existing?.id ?: "new_${System.currentTimeMillis()}",
+                        uri = selectedImageUri
+                    )
+                    !imageUrl.isNullOrBlank() -> imageUrl
+                    existing != null -> existing.imageUrl
+                    else -> null
+                }
+
                 if (existing != null) {
                     // Edit mode — update existing campaign
                     val updated = existing.copy(
@@ -60,7 +77,7 @@ class PostNeedViewModel : ViewModel() {
                         description = description,
                         goalAmount = goalAmount,
                         category = category,
-                        imageUrl = imageUrl
+                        imageUrl = finalImageUrl
                     )
                     campaignRepository.updateCampaign(updated)
                 } else {
@@ -72,7 +89,7 @@ class PostNeedViewModel : ViewModel() {
                         description = description,
                         goalAmount = goalAmount,
                         category = category,
-                        imageUrl = imageUrl,
+                        imageUrl = finalImageUrl,
                         associationId = currentUser.uid,
                         associationName = orgName,
                         createdAt = System.currentTimeMillis()
@@ -98,6 +115,12 @@ class PostNeedViewModel : ViewModel() {
                 _uiState.value = PostNeedUiState(errorMessage = e.message ?: "Failed to save campaign")
             }
         }
+    }
+
+    private suspend fun uploadCampaignImage(associationId: String, campaignId: String, uri: Uri): String {
+        val ref = storage.reference.child("campaign_images/$associationId/$campaignId.jpg")
+        ref.putFile(uri).await()
+        return ref.downloadUrl.await().toString()
     }
 
     fun resetState() {
