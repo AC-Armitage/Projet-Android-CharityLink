@@ -19,6 +19,8 @@ import com.fpl.charitylink.data.repository.UserRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.net.Uri
+import com.google.firebase.storage.FirebaseStorage
 import com.fpl.charitylink.data.model.Organization
 import com.fpl.charitylink.data.repository.OrganizationRepository
 
@@ -197,6 +199,42 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun saveLanguage(language: String) {
         viewModelScope.launch {
             userPrefs.saveLanguage(language)
+        }
+    }
+
+    // --- Upload profile photo and persist URL ---
+    fun updatePhotoUrl(
+        imageUri: Uri,
+        onResult: (success: Boolean, error: String?) -> Unit
+    ) {
+        val uid = auth.currentUser?.uid ?: run {
+            onResult(false, "Not logged in")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val storageRef = FirebaseStorage.getInstance()
+                    .reference
+                    .child("profile_photos/$uid.jpg")
+                // Upload bytes
+                storageRef.putFile(imageUri).await()
+                // Get public download URL
+                val downloadUrl = storageRef.downloadUrl.await().toString()
+                // Persist to Firestore
+                userRepository.updateUser(uid, mapOf("photoUrl" to downloadUrl))
+                // Sync local cache (read current snapshot from the StateFlow)
+                val current = cachedUser.value
+                userPrefs.saveUser(
+                    uid = uid,
+                    fullName = current["fullName"] ?: "",
+                    email = current["email"] ?: "",
+                    role = current["role"] ?: "",
+                    photoUrl = downloadUrl
+                )
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.message ?: "Upload failed")
+            }
         }
     }
 

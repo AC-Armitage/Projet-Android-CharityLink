@@ -35,6 +35,8 @@ object CharityLinkDestinations {
     const val CHAT_LIST = "chat_list"
     const val CHAT = "chat"
     const val EDIT_NEED = "edit_need"
+    const val FAQ = "faq"
+    const val SUPPORT = "support"
 }
 
 @Composable
@@ -157,6 +159,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 onExploreClick = { navController.navigate(CharityLinkDestinations.DONOR_EXPLORE) },
                 onNotificationsClick = { navController.navigate(CharityLinkDestinations.NOTIFICATIONS) },
                 onChatClick = { navController.navigate(CharityLinkDestinations.CHAT_LIST) },
+                onSettingsClick = { navController.navigate(CharityLinkDestinations.SETTINGS) },
                 onDonationsClick = { navController.navigate(CharityLinkDestinations.ASSOCIATION_DONATIONS) },
                 onPostNeedClick = { navController.navigate(CharityLinkDestinations.POST_NEED) },
                 onNeedClick = { needId ->
@@ -235,6 +238,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 },
                 onEditProfile = { navController.navigate(CharityLinkDestinations.EDIT_PROFILE) },
                 onSettings = { navController.navigate(CharityLinkDestinations.SETTINGS) },
+                onNotificationsClick = { navController.navigate(CharityLinkDestinations.NOTIFICATIONS) },
                 onHomeClick = {
                     val destination = if (role == "association")
                         CharityLinkDestinations.ASSOCIATION_HOME
@@ -242,8 +246,15 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                         CharityLinkDestinations.DONOR_HOME
                     navController.navigate(destination) { popUpTo(0) }
                 },
-                onExploreClick = { /* TODO */ },
-                onDonationsClick = { /* TODO */ },
+                onExploreClick = { navController.navigate(CharityLinkDestinations.DONOR_EXPLORE) },
+                onDonationsClick = {
+                    val destination = if (role == "association")
+                        CharityLinkDestinations.ASSOCIATION_DONATIONS
+                    else
+                        CharityLinkDestinations.DONOR_DONATIONS
+                    navController.navigate(destination)
+                },
+                onSupportClick = { navController.navigate(CharityLinkDestinations.SUPPORT) },
                 authViewModel = authViewModel
             )
         }
@@ -256,6 +267,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
         composable(CharityLinkDestinations.SETTINGS) {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
+                onSupport = { navController.navigate(CharityLinkDestinations.SUPPORT) },
                 authViewModel = authViewModel
             )
         }
@@ -291,6 +303,15 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 otherUserId = otherUserId,
                 otherUserName = otherUserName,
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable(CharityLinkDestinations.FAQ) {
+            FaqScreen(onBack = { navController.popBackStack() })
+        }
+        composable(CharityLinkDestinations.SUPPORT) {
+            SupportScreen(
+                onBack = { navController.popBackStack() },
+                onFaqClick = { navController.navigate(CharityLinkDestinations.FAQ) }
             )
         }
     }

@@ -23,6 +23,7 @@ import com.fpl.charitylink.viewmodel.AuthViewModel
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onSupport: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -176,6 +177,20 @@ fun SettingsScreen(
                     )
                 },
                 onClick = { showAboutDialog = true }
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            SettingsItem(
+                icon = Icons.Outlined.SupportAgent,
+                title = "Help & Support",
+                subtitle = "FAQ and contact us",
+                trailingContent = {
+                    Icon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outlineVariant
+                    )
+                },
+                onClick = onSupport
             )
         }
     }

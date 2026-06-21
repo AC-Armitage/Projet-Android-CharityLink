@@ -50,6 +50,7 @@ fun AssociationHomeScreen(
     onNeedClick: (String) -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onChatClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     onEditNeedClick: (String) -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -131,7 +132,7 @@ fun AssociationHomeScreen(
     }
 
     Scaffold(
-        topBar = { AssociationTopBar(onNotificationsClick = onNotificationsClick, onChatClick = onChatClick) },
+        topBar = { AssociationTopBar(onNotificationsClick = onNotificationsClick, onChatClick = onChatClick, onSettingsClick = onSettingsClick) },
         bottomBar = {
             AssociationBottomBar(
                 onProfileClick = onProfileClick,
@@ -193,7 +194,7 @@ fun AssociationHomeScreen(
 }
 
 @Composable
-private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}, onChatClick: () -> Unit = {}) {
+private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}, onChatClick: () -> Unit = {}, onSettingsClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -241,8 +242,8 @@ private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}, onChatClick
             ) {
                 Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh, onClick = onSettingsClick) {
+                Icon(Icons.Outlined.Settings, contentDescription = "Settings", modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

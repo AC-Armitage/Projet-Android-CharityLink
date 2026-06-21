@@ -35,6 +35,23 @@ fun PostNeedScreen(
     var expanded by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsState()
+    val isEditMode = !campaignId.isNullOrBlank()
+
+    LaunchedEffect(campaignId) {
+        if (!campaignId.isNullOrBlank()) {
+            viewModel.loadCampaign(campaignId)
+        }
+    }
+
+    LaunchedEffect(uiState.existingCampaign) {
+        uiState.existingCampaign?.let { campaign ->
+            title = campaign.title
+            description = campaign.description
+            goalAmount = if (campaign.goalAmount > 0.0) campaign.goalAmount.toString() else ""
+            category = campaign.category.replaceFirstChar { it.uppercase() }.ifBlank { "Food" }
+            imageUrl = campaign.imageUrl ?: ""
+        }
+    }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -46,7 +63,7 @@ fun PostNeedScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Post a New Need") },
+                title = { Text(if (isEditMode) "Edit Campaign" else "Post a New Need") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -158,7 +175,7 @@ fun PostNeedScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
-                    Text("Publish Campaign", style = MaterialTheme.typography.titleMedium)
+                    Text(if (isEditMode) "Save Changes" else "Publish Campaign", style = MaterialTheme.typography.titleMedium)
                 }
             }
         }

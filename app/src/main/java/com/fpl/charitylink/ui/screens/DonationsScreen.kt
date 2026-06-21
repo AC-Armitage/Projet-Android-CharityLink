@@ -1,5 +1,7 @@
 package com.fpl.charitylink.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,7 +9,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +28,7 @@ import com.fpl.charitylink.viewmodel.DonationsViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DonationsScreen(
     isAssociation: Boolean = false,
@@ -29,6 +36,8 @@ fun DonationsScreen(
     viewModel: DonationsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteSelectedDialog by remember { mutableStateOf(false) }
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (isAssociation) {
@@ -38,13 +47,56 @@ fun DonationsScreen(
         }
     }
 
+    // Donors can manage (select/delete) their own donation history.
+    // Associations only view incoming donations, so no delete controls for them.
+    val canManage = !isAssociation
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isAssociation) "Incoming Donations" else "My Donations") },
+                title = {
+                    Text(
+                        if (uiState.selectionMode)
+                            "${uiState.selectedIds.size} selected"
+                        else if (isAssociation) "Incoming Donations" else "My Donations"
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = {
+                        if (uiState.selectionMode) viewModel.setSelectionMode(false) else onBack()
+                    }) {
+                        Icon(
+                            if (uiState.selectionMode) Icons.Default.Close else Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = if (uiState.selectionMode) "Cancel selection" else "Back"
+                        )
+                    }
+                },
+                actions = {
+                    if (canManage && uiState.donations.isNotEmpty()) {
+                        if (uiState.selectionMode) {
+                            TextButton(onClick = {
+                                if (uiState.selectedIds.size == uiState.donations.size) {
+                                    viewModel.clearSelection()
+                                } else {
+                                    viewModel.selectAll()
+                                }
+                            }) {
+                                Text(if (uiState.selectedIds.size == uiState.donations.size) "Deselect all" else "Select all")
+                            }
+                            IconButton(
+                                onClick = { showDeleteSelectedDialog = true },
+                                enabled = uiState.selectedIds.isNotEmpty() && !uiState.isDeleting
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete selected")
+                            }
+                        } else {
+                            IconButton(onClick = { viewModel.setSelectionMode(true) }) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = "Select donations")
+                            }
+                            IconButton(onClick = { showDeleteAllDialog = true }) {
+                                Icon(Icons.Default.DeleteSweep, contentDescription = "Delete all history")
+                            }
+                        }
                     }
                 }
             )
@@ -108,47 +160,128 @@ fun DonationsScreen(
                     if (uiState.donations.isEmpty()) {
                         item { EmptyDonationsState(isAssociation) }
                     } else {
-                        items(uiState.donations) { donation ->
-                            DonationItemCard(donation, isAssociation)
+                        items(uiState.donations, key = { it.id }) { donation ->
+                            DonationItemCard(
+                                donation = donation,
+                                isAssociation = isAssociation,
+                                selectionMode = canManage && uiState.selectionMode,
+                                selected = uiState.selectedIds.contains(donation.id),
+                                onClick = {
+                                    if (canManage && uiState.selectionMode) viewModel.toggleSelected(donation.id)
+                                },
+                                onLongClick = {
+                                    if (canManage && !uiState.selectionMode) {
+                                        viewModel.setSelectionMode(true)
+                                        viewModel.toggleSelected(donation.id)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
             }
         }
     }
+
+    if (showDeleteSelectedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteSelectedDialog = false },
+            title = { Text("Delete selected donations?") },
+            text = { Text("This will permanently remove ${uiState.selectedIds.size} donation${if (uiState.selectedIds.size != 1) "s" else ""} from your history. This can't be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteSelected()
+                        showDeleteSelectedDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteSelectedDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("Delete all donation history?") },
+            text = { Text("This will permanently remove all ${uiState.donations.size} donation${if (uiState.donations.size != 1) "s" else ""} from your history. This can't be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteAll()
+                        showDeleteAllDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) { Text("Delete all") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DonationItemCard(donation: Donation, isAssociation: Boolean) {
+fun DonationItemCard(
+    donation: Donation,
+    isAssociation: Boolean,
+    selectionMode: Boolean = false,
+    selected: Boolean = false,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
+) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val date = dateFormat.format(Date(donation.createdAt))
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = if (selected)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.CardGiftcard,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+            if (selectionMode) {
+                Icon(
+                    imageVector = if (selected) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = if (selected) "Selected" else "Not selected",
+                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(end = 12.dp).size(24.dp)
+                )
+            } else {
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.CardGiftcard,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.width(16.dp))
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

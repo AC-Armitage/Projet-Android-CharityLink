@@ -33,6 +33,8 @@ fun ProfileScreen(
     onHomeClick: () -> Unit = {},       // ← add
     onExploreClick: () -> Unit = {},    // ← add
     onDonationsClick: () -> Unit = {},  // ← add
+    onNotificationsClick: () -> Unit = {},
+    onSupportClick: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
     val cachedUser by authViewModel.cachedUser.collectAsState()
@@ -48,7 +50,7 @@ fun ProfileScreen(
         ?: firebaseUser?.photoUrl?.toString()
     val role = cachedUser["role"] ?: "donor"
     Scaffold(
-        topBar = { ProfileTopBar(photoUrl) },
+        topBar = { ProfileTopBar(photoUrl, onNotificationsClick) },
         bottomBar = {
             ProfileBottomBar(
                 onHomeClick = onHomeClick,
@@ -119,7 +121,7 @@ fun ProfileScreen(
                 icon = Icons.Outlined.History,
                 title = "Donation History",
                 subtitle = "View all your past contributions",
-                onClick = { /* TODO */ }
+                onClick = onDonationsClick
             )
             Spacer(modifier = Modifier.height(8.dp))
             ProfileMenuItem(
@@ -133,7 +135,7 @@ fun ProfileScreen(
                 icon = Icons.AutoMirrored.Outlined.HelpOutline,
                 title = "Help & Support",
                 subtitle = "FAQ and contact us",
-                onClick = { /* TODO */ }
+                onClick = onSupportClick
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -196,7 +198,7 @@ private fun ProfileMenuItem(
 }
 
 @Composable
-private fun ProfileTopBar(photoUrl: String?) {
+private fun ProfileTopBar(photoUrl: String?, onNotificationsClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth().height(64.dp)
             .background(MaterialTheme.colorScheme.surface)
@@ -210,10 +212,10 @@ private fun ProfileTopBar(photoUrl: String?) {
             color = MaterialTheme.colorScheme.primary
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh, onClick = onNotificationsClick) {
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
-                    contentDescription = null,
+                    contentDescription = "Notifications",
                     modifier = Modifier.padding(10.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
