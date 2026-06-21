@@ -33,6 +33,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel()
 ) {
+    android.util.Log.d("ChatDebug", "ChatScreen COMPOSED/RECOMPOSED, viewModel hash=${viewModel.hashCode()}")
     val uiState by viewModel.uiState.collectAsState()
     val currentUserId = viewModel.currentUserId
     val cachedRole by authViewModel.cachedRole.collectAsState()
@@ -94,10 +95,14 @@ fun ChatScreen(
                         maxLines = 4
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    var isSending by remember { mutableStateOf(false) }
+
                     IconButton(
                         onClick = {
                             val textToSend = inputText.trim()
-                            if (textToSend.isNotEmpty()) {
+                            if (textToSend.isNotEmpty() && !isSending) {
+                                isSending = true
+                                inputText = ""
                                 viewModel.sendMessage(
                                     text = textToSend,
                                     chatId = chatId,
@@ -106,10 +111,9 @@ fun ChatScreen(
                                     associationId = associationId,
                                     associationName = associationName
                                 )
-                                inputText = ""
                             }
                         },
-                        enabled = inputText.isNotBlank()
+                        enabled = inputText.isNotBlank() && !isSending
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                     }
@@ -117,6 +121,16 @@ fun ChatScreen(
             }
         }
     ) { innerPadding ->
+        if (uiState.errorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "Error: ${uiState.errorMessage}",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            return@Scaffold
+        }
         if (uiState.messages.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
