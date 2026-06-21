@@ -47,6 +47,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val cachedUser: StateFlow<Map<String, String>> = userPrefs.userData
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
+    // Expose cached language as StateFlow
+    val cachedLanguage: StateFlow<String> = userPrefs.language
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "English")
+
     val currentUser: FirebaseUser? get() = auth.currentUser
 
     // --- Register ---
@@ -57,11 +61,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val result = auth.createUserWithEmailAndPassword(email, password).await()
                 val user = result.user!!
 
-                // Save to users collection
                 val newUser = User(uid = user.uid, fullName = fullName, email = email, role = role)
                 userRepository.saveUser(newUser)
 
-                // If association, also save to organizations collection
                 if (role == "association") {
                     val org = Organization(
                         uid = user.uid,
@@ -88,7 +90,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val result = auth.signInWithEmailAndPassword(email, password).await()
                 val user = result.user!!
-                // Sync from Firestore and cache
                 val firestoreUser = userRepository.syncUser(user.uid)
                 val role = firestoreUser?.role ?: "donor"
                 userPrefs.saveUser(
@@ -128,7 +129,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val existingRole = if (doc.exists()) {
                     doc.getString("role") ?: role
                 } else {
-                    // New Google user — save to Firestore
                     val newUser = User(
                         uid = user.uid,
                         fullName = user.displayName ?: "",
@@ -136,7 +136,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         role = role
                     )
                     userRepository.saveUser(newUser)
-                    // If association, also save to organizations collection
                     if (role == "association") {
                         val org = Organization(
                             uid = user.uid,
@@ -149,7 +148,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     role
                 }
-                // Cache locally
                 userPrefs.saveUser(
                     uid = user.uid,
                     fullName = user.displayName ?: "",
@@ -185,15 +183,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchCurrentUserRole(onResult: (String) -> Unit) {
         viewModelScope.launch {
             val uid = auth.currentUser?.uid ?: return@launch
-            // Try cache first
             val cached = cachedRole.value
             if (cached.isNotEmpty()) {
                 onResult(cached)
                 return@launch
             }
-            // Fallback to Firestore
             val role = userRepository.syncUser(uid)?.role ?: "donor"
             onResult(role)
+        }
+    }
+
+    // --- Save language preference ---
+    fun saveLanguage(language: String) {
+        viewModelScope.launch {
+            userPrefs.saveLanguage(language)
         }
     }
 

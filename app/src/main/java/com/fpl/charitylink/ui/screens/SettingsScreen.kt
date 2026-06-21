@@ -14,8 +14,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fpl.charitylink.MainActivity
 import com.fpl.charitylink.viewmodel.AuthViewModel
 
 @Composable
@@ -23,9 +25,11 @@ fun SettingsScreen(
     onBack: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
-    // Language dialog state
+    val context = LocalContext.current
+
+    // Language — read from persisted state, not throwaway remember
     var showLanguageDialog by remember { mutableStateOf(false) }
-    var selectedLanguage by remember { mutableStateOf("English") }
+    val persistedLanguage by authViewModel.cachedLanguage.collectAsState()
     val languages = listOf("English", "French", "Arabic")
 
     // Notification states
@@ -91,11 +95,11 @@ fun SettingsScreen(
             SettingsItem(
                 icon = Icons.Outlined.Language,
                 title = "Language",
-                subtitle = selectedLanguage,
+                subtitle = persistedLanguage,
                 trailingContent = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = selectedLanguage,
+                            text = persistedLanguage,
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -189,8 +193,13 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
-                                selected = selectedLanguage == language,
-                                onClick = { selectedLanguage = language }
+                                selected = persistedLanguage == language,
+                                onClick = {
+                                    // Persist to DataStore
+                                    authViewModel.saveLanguage(language)
+                                    // Apply locale immediately — activity will recreate
+                                    MainActivity.applyLocale(language)
+                                }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = language, style = MaterialTheme.typography.bodyMedium)

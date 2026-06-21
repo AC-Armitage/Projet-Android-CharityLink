@@ -18,9 +18,9 @@ class UserPreferences(private val context: Context) {
         val KEY_EMAIL = stringPreferencesKey("email")
         val KEY_ROLE = stringPreferencesKey("role")
         val KEY_PHOTO_URL = stringPreferencesKey("photo_url")
+        val KEY_LANGUAGE = stringPreferencesKey("language")
     }
 
-    // Save user to local cache
     suspend fun saveUser(
         uid: String,
         fullName: String,
@@ -37,12 +37,20 @@ class UserPreferences(private val context: Context) {
         }
     }
 
-    // Get role as Flow (reactive)
+    suspend fun saveLanguage(language: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LANGUAGE] = language
+        }
+    }
+
     val role: Flow<String> = context.dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs -> prefs[KEY_ROLE] ?: "donor" }
 
-    // Get full cached user as Flow
+    val language: Flow<String> = context.dataStore.data
+        .catch { emit(emptyPreferences()) }
+        .map { prefs -> prefs[KEY_LANGUAGE] ?: "English" }
+
     val userData: Flow<Map<String, String>> = context.dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
@@ -55,7 +63,6 @@ class UserPreferences(private val context: Context) {
             )
         }
 
-    // Clear cache on logout
     suspend fun clear() {
         context.dataStore.edit { it.clear() }
     }
