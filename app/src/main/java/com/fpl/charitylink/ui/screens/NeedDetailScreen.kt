@@ -76,6 +76,7 @@ fun NeedDetailScreen(
                         onClick = { onDonateClick(needId) },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .navigationBarsPadding()
                             .padding(16.dp)
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp)

@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -61,6 +62,7 @@ fun DonorHomeScreen(
     onAssociationClick: (String) -> Unit = {},
     onNeedClick: (String) -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onChatClick: () -> Unit = {},
     onDonateClick: () -> Unit = {},
     onSeeAllClick: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
@@ -122,7 +124,14 @@ fun DonorHomeScreen(
     }
 
     Scaffold(
-        topBar = { DonorTopBar(displayName = displayName, photoUrl = photoUrl) },
+        topBar = {
+            DonorTopBar(
+                displayName = displayName,
+                photoUrl = photoUrl,
+                onNotificationsClick = onNotificationsClick,
+                onChatClick = onChatClick
+            )
+        },
         bottomBar = {
             DonorBottomBar(
                 onProfileClick = onProfileClick,
@@ -358,7 +367,7 @@ private fun EmptyState(message: String) {
 }
 
 @Composable
-private fun DonorTopBar(displayName: String = "", photoUrl: String? = null,onNotificationsClick: () -> Unit = {}) {
+private fun DonorTopBar(displayName: String = "", photoUrl: String? = null, onNotificationsClick: () -> Unit = {}, onChatClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth().statusBarsPadding().height(64.dp).background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -378,8 +387,14 @@ private fun DonorTopBar(displayName: String = "", photoUrl: String? = null,onNot
                 Text(text = "Hello, $displayName", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
             }
         }
-        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh ,onClick = onNotificationsClick) {
-            Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.primary)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh, onClick = onChatClick) {
+                Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = "Messages", modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh ,onClick = onNotificationsClick) {
+                Icon(Icons.Outlined.Notifications, contentDescription = null, modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }

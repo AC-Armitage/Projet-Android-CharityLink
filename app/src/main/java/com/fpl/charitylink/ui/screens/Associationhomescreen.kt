@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -48,6 +49,7 @@ fun AssociationHomeScreen(
     onPostNeedClick: () -> Unit = {},
     onNeedClick: (String) -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onChatClick: () -> Unit = {},
     onEditNeedClick: (String) -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -114,7 +116,7 @@ fun AssociationHomeScreen(
     }
 
     Scaffold(
-        topBar = { AssociationTopBar(onNotificationsClick = onNotificationsClick) },
+        topBar = { AssociationTopBar(onNotificationsClick = onNotificationsClick, onChatClick = onChatClick) },
         bottomBar = {
             AssociationBottomBar(
                 onProfileClick = onProfileClick,
@@ -176,7 +178,7 @@ fun AssociationHomeScreen(
 }
 
 @Composable
-private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}) {
+private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}, onChatClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,6 +212,13 @@ private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}) {
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                onClick = onChatClick
+            ) {
+                Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = "Messages", modifier = Modifier.padding(10.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,

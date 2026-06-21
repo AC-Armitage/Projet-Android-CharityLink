@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import coil.compose.AsyncImage
 import com.fpl.charitylink.data.model.Campaign
 import com.fpl.charitylink.data.model.Organization
 import com.fpl.charitylink.viewmodel.AssociationDetailViewModel
+import com.fpl.charitylink.viewmodel.ChatViewModel
 import java.util.Locale
 import kotlin.math.min
 
@@ -35,7 +37,9 @@ fun AssociationDetailScreen(
     associationId: String,
     onBack: () -> Unit,
     onNeedClick: (String) -> Unit,
-    viewModel: AssociationDetailViewModel = viewModel()
+    onMessageClick: (chatId: String, otherUserId: String, otherUserName: String) -> Unit = { _, _, _ -> },
+    viewModel: AssociationDetailViewModel = viewModel(),
+    chatViewModel: ChatViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -77,7 +81,13 @@ fun AssociationDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    AssociationHeader(org)
+                    AssociationHeader(
+                        org = org,
+                        onMessageClick = {
+                            val chatId = chatViewModel.getChatId(org.uid)
+                            onMessageClick(chatId, org.uid, org.name)
+                        }
+                    )
                 }
                 
                 item {
@@ -110,7 +120,7 @@ fun AssociationDetailScreen(
 }
 
 @Composable
-fun AssociationHeader(org: Organization) {
+fun AssociationHeader(org: Organization, onMessageClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -174,6 +184,18 @@ fun AssociationHeader(org: Organization) {
             ) {
                 ContactInfo(icon = Icons.Filled.LocationOn, text = org.address ?: "No address")
                 ContactInfo(icon = Icons.Filled.Phone, text = org.phone ?: "No phone")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onMessageClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(50)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Message")
             }
         }
     }

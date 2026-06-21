@@ -25,12 +25,15 @@ object CharityLinkDestinations {
     const val ASSOCIATION_DONATIONS = "association_donations"
     const val ASSOCIATION_DETAIL = "association_detail"
     const val NEED_DETAIL = "need_detail"
+    const val DONATE = "donate"
     const val POST_NEED = "post_need"
     const val PROFILE = "profile"
     const val EDIT_PROFILE = "edit_profile"
     const val SETTINGS = "settings"
     const val ALL_CAMPAIGNS = "all_campaigns"
     const val NOTIFICATIONS = "notifications"
+    const val CHAT_LIST = "chat_list"
+    const val CHAT = "chat"
     const val EDIT_NEED = "edit_need"
 }
 
@@ -127,6 +130,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 onProfileClick = { navController.navigate(CharityLinkDestinations.PROFILE) },
                 onSeeAllClick = { navController.navigate(CharityLinkDestinations.ALL_CAMPAIGNS) },
                 onNotificationsClick = { navController.navigate(CharityLinkDestinations.NOTIFICATIONS) },
+                onChatClick = { navController.navigate(CharityLinkDestinations.CHAT_LIST) },
                 onExploreClick = { navController.navigate(CharityLinkDestinations.DONOR_EXPLORE) },
                 onDonationsClick = { navController.navigate(CharityLinkDestinations.DONOR_DONATIONS) },
                 onAssociationClick = { associationId ->
@@ -135,7 +139,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 onNeedClick = { needId ->
                     navController.navigate("${CharityLinkDestinations.NEED_DETAIL}/$needId")
                 },
-                onDonateClick = { navController.navigate(CharityLinkDestinations.DONOR_DONATIONS) },
+                onDonateClick = { navController.navigate(CharityLinkDestinations.ALL_CAMPAIGNS) },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(CharityLinkDestinations.LOGIN + "/donor") { popUpTo(0) }
@@ -152,6 +156,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 },
                 onExploreClick = { navController.navigate(CharityLinkDestinations.DONOR_EXPLORE) },
                 onNotificationsClick = { navController.navigate(CharityLinkDestinations.NOTIFICATIONS) },
+                onChatClick = { navController.navigate(CharityLinkDestinations.CHAT_LIST) },
                 onDonationsClick = { navController.navigate(CharityLinkDestinations.ASSOCIATION_DONATIONS) },
                 onPostNeedClick = { navController.navigate(CharityLinkDestinations.POST_NEED) },
                 onNeedClick = { needId ->
@@ -186,6 +191,10 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 onBack = { navController.popBackStack() },
                 onNeedClick = { needId ->
                     navController.navigate("${CharityLinkDestinations.NEED_DETAIL}/$needId")
+                },
+                onMessageClick = { chatId, otherUserId, otherUserName ->
+                    val encodedName = java.net.URLEncoder.encode(otherUserName, "UTF-8")
+                    navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$otherUserId/$encodedName")
                 }
             )
         }
@@ -197,7 +206,17 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 onAssociationClick = { associationId ->
                     navController.navigate("${CharityLinkDestinations.ASSOCIATION_DETAIL}/$associationId")
                 },
-                onDonateClick = { /* Navigate to donation flow when ready */ }
+                onDonateClick = { needId ->
+                    navController.navigate("${CharityLinkDestinations.DONATE}/$needId")
+                }
+            )
+        }
+        composable("${CharityLinkDestinations.DONATE}/{campaignId}") { backStackEntry ->
+            val campaignId = backStackEntry.arguments?.getString("campaignId") ?: ""
+            DonateScreen(
+                campaignId = campaignId,
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
         composable(CharityLinkDestinations.POST_NEED) {
@@ -244,12 +263,33 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
             AllCampaignsScreen(
                 onBack = { navController.popBackStack() },
                 onCampaignClick = { campaignId ->
-                    // TODO: navigate to campaign detail
+                    navController.navigate("${CharityLinkDestinations.NEED_DETAIL}/$campaignId")
                 }
             )
         }
         composable(CharityLinkDestinations.NOTIFICATIONS) {
             NotificationsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(CharityLinkDestinations.CHAT_LIST) {
+            ChatListScreen(
+                onBack = { navController.popBackStack() },
+                onChatClick = { chatId, otherUserId, otherUserName ->
+                    val encodedName = java.net.URLEncoder.encode(otherUserName, "UTF-8")
+                    navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$otherUserId/$encodedName")
+                }
+            )
+        }
+        composable("${CharityLinkDestinations.CHAT}/{chatId}/{otherUserId}/{otherUserName}") { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString("chatId") ?: ""
+            val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: ""
+            val rawName = backStackEntry.arguments?.getString("otherUserName") ?: ""
+            val otherUserName = java.net.URLDecoder.decode(rawName, "UTF-8")
+            ChatScreen(
+                chatId = chatId,
+                otherUserId = otherUserId,
+                otherUserName = otherUserName,
                 onBack = { navController.popBackStack() }
             )
         }
