@@ -58,6 +58,7 @@ class ChatViewModel : ViewModel() {
     ) {
         if (text.isBlank()) return
         viewModelScope.launch {
+            android.util.Log.d("ChatDebug", "ViewModel coroutine STARTED for chatId=$chatId")
             try {
                 val message = Message(
                     senderId = currentUserId,
@@ -73,10 +74,13 @@ class ChatViewModel : ViewModel() {
                     associationId = associationId,
                     associationName = associationName
                 )
+                android.util.Log.d("ChatDebug", "ViewModel sendMessage completed OK")
             } catch (e: Exception) {
+                android.util.Log.e("ChatDebug", "ViewModel sendMessage caught exception", e)
                 _uiState.value = _uiState.value.copy(errorMessage = e.message)
             }
         }
+
     }
 
     // Mark messages as read when opening chat

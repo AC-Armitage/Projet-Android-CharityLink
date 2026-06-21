@@ -46,8 +46,10 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
 
     // Handle navigation after auth success
     val authState by authViewModel.authState.collectAsState()
+    android.util.Log.d("ChatDebug", "NAVHOST authState=$authState")
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
+            android.util.Log.d("ChatDebug", "NAVHOST popUpTo(0) triggered! authState=$authState")
             val role = (authState as AuthState.Success).role
             val destination = if (role == "association")
                 CharityLinkDestinations.ASSOCIATION_HOME
@@ -298,6 +300,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: ""
             val rawName = backStackEntry.arguments?.getString("otherUserName") ?: ""
             val otherUserName = java.net.URLDecoder.decode(rawName, "UTF-8")
+            android.util.Log.d("ChatDebug", "NAV ROUTE ENTERED: chatId=$chatId, otherUserId=$otherUserId, backStackEntry=${backStackEntry.hashCode()}")
             ChatScreen(
                 chatId = chatId,
                 otherUserId = otherUserId,
