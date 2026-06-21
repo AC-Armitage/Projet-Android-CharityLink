@@ -69,6 +69,18 @@ fun DonorHomeScreen(
 ) {
     val donorHomeViewModel: DonorHomeViewModel = viewModel()
     val uiState by donorHomeViewModel.uiState.collectAsState()
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                donorHomeViewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     val errorMessage = uiState.errorMessage
 
     val cachedUser by authViewModel.cachedUser.collectAsState()

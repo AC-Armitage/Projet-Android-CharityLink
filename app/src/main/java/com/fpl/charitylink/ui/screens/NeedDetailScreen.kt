@@ -184,7 +184,7 @@ fun NeedDetailScreen(
                             .height(12.dp)
                             .clip(RoundedCornerShape(6.dp)),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.primaryContainer
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest // was primaryContainer — too close to primary
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))

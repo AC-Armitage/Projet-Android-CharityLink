@@ -60,8 +60,23 @@ fun AssociationHomeScreen(
 
     var campaignToDelete by remember { mutableStateOf<String?>(null) }
 
+// Initial load
     LaunchedEffect(associationId) {
         associationHomeViewModel.load(associationId)
+    }
+
+// Refresh every time the screen resumes (e.g. after editing/deleting/donating)
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                associationHomeViewModel.load(associationId)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     val needs = uiState.campaigns.map { campaign ->
