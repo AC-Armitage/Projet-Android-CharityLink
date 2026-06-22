@@ -130,7 +130,6 @@ graph TD
 
 ## Screenshots
 
-> Add screenshots of the running app below — drag images into this file in GitHub/your editor, or reference files placed in a `screenshots/` folder at the project root.
 
 | Onboarding | Donor Home | Campaign Detail |
 |---|---|---|
