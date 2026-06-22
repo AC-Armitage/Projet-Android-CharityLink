@@ -31,6 +31,7 @@ fun LoginScreen(
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var showFacebookComingSoon by remember { mutableStateOf(false) }
 
     val authState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
@@ -130,6 +131,27 @@ fun LoginScreen(
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(text = "Continue with Google", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { showFacebookComingSoon = true },
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(text = "Continue with Facebook", style = MaterialTheme.typography.labelLarge)
+                    }
+                    if (showFacebookComingSoon) {
+                        LaunchedEffect(Unit) {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Facebook login is coming soon",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                            showFacebookComingSoon = false
+                        }
                     }
                 }
             }

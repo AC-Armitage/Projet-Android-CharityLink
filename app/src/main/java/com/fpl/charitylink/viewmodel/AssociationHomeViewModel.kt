@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fpl.charitylink.data.model.Campaign
 import com.fpl.charitylink.data.repository.CampaignRepository
 import com.fpl.charitylink.data.repository.DonationRepository
+import com.fpl.charitylink.data.repository.OrganizationRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,12 +16,14 @@ data class AssociationHomeUiState(
     val campaigns: List<Campaign> = emptyList(),
     val totalDonations: Double = 0.0,
     val donorsCount: Int = 0,
+    val logoUrl: String? = null,
     val errorMessage: String? = null
 )
 
 class AssociationHomeViewModel : ViewModel() {
     private val campaignRepository = CampaignRepository()
     private val donationRepository = DonationRepository()
+    private val organizationRepository = OrganizationRepository()
 
     private val _uiState = MutableStateFlow(AssociationHomeUiState())
     val uiState: StateFlow<AssociationHomeUiState> = _uiState
@@ -44,9 +47,13 @@ class AssociationHomeViewModel : ViewModel() {
                 val donationsDeferred = async {
                     donationRepository.getAssociationDonations(associationId)
                 }
+                val orgDeferred = async {
+                    organizationRepository.getOrganization(associationId)
+                }
 
                 val campaigns = campaignsDeferred.await()
                 val donations = donationsDeferred.await()
+                val org = orgDeferred.await()
 
                 val totalDonations = donations.sumOf { it.amount }
                 val donorsCount = donations.map { it.donorId }.distinct().count()
@@ -55,10 +62,11 @@ class AssociationHomeViewModel : ViewModel() {
                     isLoading = false,
                     campaigns = campaigns,
                     totalDonations = totalDonations,
-                    donorsCount = donorsCount
+                    donorsCount = donorsCount,
+                    logoUrl = org?.logoUrl
                 )
             } catch (e: Exception) {
-                _uiState.value = AssociationHomeUiState(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = e.message ?: "Failed to load data"
                 )

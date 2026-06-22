@@ -132,7 +132,7 @@ fun AssociationHomeScreen(
     }
 
     Scaffold(
-        topBar = { AssociationTopBar(onNotificationsClick = onNotificationsClick, onChatClick = onChatClick, onSettingsClick = onSettingsClick) },
+        topBar = { AssociationTopBar(logoUrl = uiState.logoUrl, onNotificationsClick = onNotificationsClick, onChatClick = onChatClick, onSettingsClick = onSettingsClick) },
         bottomBar = {
             AssociationBottomBar(
                 onProfileClick = onProfileClick,
@@ -194,7 +194,7 @@ fun AssociationHomeScreen(
 }
 
 @Composable
-private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}, onChatClick: () -> Unit = {}, onSettingsClick: () -> Unit = {}) {
+private fun AssociationTopBar(logoUrl: String? = null, onNotificationsClick: () -> Unit = {}, onChatClick: () -> Unit = {}, onSettingsClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -213,12 +213,21 @@ private fun AssociationTopBar(onNotificationsClick: () -> Unit = {}, onChatClick
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.VolunteerActivism,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(20.dp)
-                )
+                if (!logoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = logoUrl,
+                        contentDescription = "Organization logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.VolunteerActivism,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(

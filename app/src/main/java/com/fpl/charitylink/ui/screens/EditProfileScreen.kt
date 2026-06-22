@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
@@ -32,6 +33,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.fpl.charitylink.data.repository.OrganizationRepository
 import com.fpl.charitylink.data.repository.UserRepository
 import com.fpl.charitylink.viewmodel.AuthViewModel
 import com.google.firebase.storage.FirebaseStorage
@@ -50,12 +52,30 @@ sealed class EditProfileState {
 
 class EditProfileViewModel : ViewModel() {
     private val userRepository = UserRepository()
+    private val organizationRepository = OrganizationRepository()
     private val storage = FirebaseStorage.getInstance()
 
     private val _state = MutableStateFlow<EditProfileState>(EditProfileState.Idle)
     val state: StateFlow<EditProfileState> = _state
 
-    fun saveProfile(uid: String, fullName: String, selectedPhotoUri: Uri?) {
+    private val _organizationName = MutableStateFlow<String?>(null)
+    val organizationName: StateFlow<String?> = _organizationName
+
+    private val _organizationLogoUrl = MutableStateFlow<String?>(null)
+    val organizationLogoUrl: StateFlow<String?> = _organizationLogoUrl
+
+    // Associations have a separate Organization doc whose logoUrl is what actually
+    // renders on their profile/cards — load it so we can prefill the name + photo too.
+    fun loadOrganizationIfAssociation(uid: String, role: String) {
+        if (role != "association") return
+        viewModelScope.launch {
+            val org = organizationRepository.getOrganization(uid)
+            _organizationName.value = org?.name
+            _organizationLogoUrl.value = org?.logoUrl
+        }
+    }
+
+    fun saveProfile(uid: String, role: String, fullName: String, selectedPhotoUri: Uri?) {
         if (fullName.isBlank()) {
             _state.value = EditProfileState.Error("Name cannot be empty")
             return
@@ -63,14 +83,17 @@ class EditProfileViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = EditProfileState.Loading
             try {
-                val updates = mutableMapOf<String, Any>("fullName" to fullName)
+                val photoUrl = selectedPhotoUri?.let { uploadProfilePhoto(uid, it) }
 
-                if (selectedPhotoUri != null) {
-                    val photoUrl = uploadProfilePhoto(uid, selectedPhotoUri)
-                    updates["photoUrl"] = photoUrl
+                if (role == "association") {
+                    val updates = mutableMapOf<String, Any>("name" to fullName)
+                    if (photoUrl != null) updates["logoUrl"] = photoUrl
+                    organizationRepository.updateOrganization(uid, updates)
+                } else {
+                    val updates = mutableMapOf<String, Any>("fullName" to fullName)
+                    if (photoUrl != null) updates["photoUrl"] = photoUrl
+                    userRepository.updateUser(uid, updates)
                 }
-
-                userRepository.updateUser(uid, updates)
                 _state.value = EditProfileState.Success
             } catch (e: Exception) {
                 _state.value = EditProfileState.Error(e.message ?: "Failed to update profile")
@@ -78,8 +101,31 @@ class EditProfileViewModel : ViewModel() {
         }
     }
 
+    fun deletePhoto(uid: String, role: String) {
+        viewModelScope.launch {
+            _state.value = EditProfileState.Loading
+            try {
+                try {
+                    storage.reference.child("avatars/$uid/profile.jpg").delete().await()
+                } catch (_: Exception) {
+                    // Nothing to delete (e.g. user never uploaded one) — not a failure case.
+                }
+                if (role == "association") {
+                    organizationRepository.updateOrganization(uid, mapOf("logoUrl" to ""))
+                } else {
+                    userRepository.updateUser(uid, mapOf("photoUrl" to ""))
+                }
+                _state.value = EditProfileState.Success
+            } catch (e: Exception) {
+                _state.value = EditProfileState.Error(e.message ?: "Failed to remove photo")
+            }
+        }
+    }
+
     private suspend fun uploadProfilePhoto(uid: String, uri: Uri): String {
-        val ref = storage.reference.child("profile_photos/$uid.jpg")
+        // Path matches the existing storage.rules entry for avatars/{userId}/{fileName},
+        // so this works for both donor and association accounts without a rules change.
+        val ref = storage.reference.child("avatars/$uid/profile.jpg")
         ref.putFile(uri).await()
         return ref.downloadUrl.await().toString()
     }
@@ -96,21 +142,40 @@ fun EditProfileScreen(
 ) {
     val firebaseUser = authViewModel.currentUser
     val cachedUser by authViewModel.cachedUser.collectAsState()
+    val role by authViewModel.cachedRole.collectAsState()
+    val isAssociation = role == "association"
+    val organizationName by editProfileViewModel.organizationName.collectAsState()
+    val organizationLogoUrl by editProfileViewModel.organizationLogoUrl.collectAsState()
 
-    val initialName = cachedUser["fullName"]?.ifBlank { null }
-        ?: firebaseUser?.displayName ?: ""
+    LaunchedEffect(firebaseUser?.uid, role) {
+        firebaseUser?.uid?.let { editProfileViewModel.loadOrganizationIfAssociation(it, role) }
+    }
+
+    val initialName = if (isAssociation) {
+        organizationName ?: ""
+    } else {
+        cachedUser["fullName"]?.ifBlank { null } ?: firebaseUser?.displayName ?: ""
+    }
     val email = cachedUser["email"]?.ifBlank { null }
         ?: firebaseUser?.email ?: ""
-    val photoUrl = cachedUser["photoUrl"]?.ifBlank { null }
-        ?: firebaseUser?.photoUrl?.toString()
+    val photoUrl = if (isAssociation) {
+        organizationLogoUrl?.ifBlank { null }
+    } else {
+        cachedUser["photoUrl"]?.ifBlank { null } ?: firebaseUser?.photoUrl?.toString()
+    }
 
-    var fullName by rememberSaveable { mutableStateOf(initialName) }
+    var fullName by rememberSaveable(initialName) { mutableStateOf(initialName) }
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoRemoved by remember { mutableStateOf(false) }
+    var showRemoveDialog by remember { mutableStateOf(false) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) selectedPhotoUri = uri
+        if (uri != null) {
+            selectedPhotoUri = uri
+            photoRemoved = false
+        }
     }
 
     val editState by editProfileViewModel.state.collectAsState()
@@ -134,6 +199,25 @@ fun EditProfileScreen(
         }
     }
 
+    if (showRemoveDialog) {
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = false },
+            title = { Text("Remove photo?") },
+            text = { Text(if (isAssociation) "This will remove your organization's logo." else "This will remove your profile photo.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRemoveDialog = false
+                    selectedPhotoUri = null
+                    photoRemoved = true
+                    firebaseUser?.uid?.let { editProfileViewModel.deletePhoto(it, role) }
+                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -155,7 +239,7 @@ fun EditProfileScreen(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Edit Profile",
+                    text = if (isAssociation) "Edit Organization Profile" else "Edit Profile",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -188,11 +272,11 @@ fun EditProfileScreen(
                         .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    val imageToShow = selectedPhotoUri ?: photoUrl
+                    val imageToShow = if (photoRemoved) null else (selectedPhotoUri ?: photoUrl)
                     if (imageToShow != null) {
                         AsyncImage(
                             model = imageToShow,
-                            contentDescription = "Profile photo",
+                            contentDescription = if (isAssociation) "Organization logo" else "Profile photo",
                             modifier = Modifier.fillMaxSize().clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
@@ -221,20 +305,38 @@ fun EditProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            TextButton(
-                onClick = {
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
-                enabled = !isLoading
-            ) {
-                Text("Change Photo")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(
+                    onClick = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    enabled = !isLoading
+                ) {
+                    Text(if (isAssociation) "Change Logo" else "Change Photo")
+                }
+                val hasPhotoToRemove = !photoRemoved && (selectedPhotoUri != null || photoUrl != null)
+                if (hasPhotoToRemove) {
+                    TextButton(
+                        onClick = { showRemoveDialog = true },
+                        enabled = !isLoading
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Remove", color = MaterialTheme.colorScheme.error)
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Full Name field
+            // Name field (org name for associations, full name for donors)
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 shape = RoundedCornerShape(16.dp),
@@ -242,7 +344,7 @@ fun EditProfileScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Full Name",
+                        text = if (isAssociation) "Organization Name" else "Full Name",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -259,7 +361,7 @@ fun EditProfileScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         },
-                        placeholder = { Text("Enter your full name") },
+                        placeholder = { Text(if (isAssociation) "Enter your organization name" else "Enter your full name") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Done
@@ -323,7 +425,7 @@ fun EditProfileScreen(
             Button(
                 onClick = {
                     firebaseUser?.uid?.let {
-                        editProfileViewModel.saveProfile(it, fullName, selectedPhotoUri)
+                        editProfileViewModel.saveProfile(it, role, fullName, selectedPhotoUri)
                     }
                 },
                 enabled = fullName.isNotBlank() && (fullName != initialName || selectedPhotoUri != null) && !isLoading,
