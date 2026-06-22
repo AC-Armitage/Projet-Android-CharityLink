@@ -1,6 +1,7 @@
 package com.fpl.charitylink.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -114,51 +116,85 @@ fun SimpleAssociationCard(organization: Organization, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = organization.logoUrl,
-                contentDescription = null,
+            Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!organization.logoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = organization.logoUrl,
+                        contentDescription = "${organization.name} logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Business,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(34.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = organization.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
                     text = organization.address ?: "Location not set",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+
+                Text(
+                    text = organization.description ?: "No description yet.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
                 if (organization.verified) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Surface(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(50)
                     ) {
                         Text(
                             text = "Verified",
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
             }
-            
+
             Icon(
                 Icons.Default.ChevronRight,
                 contentDescription = null,

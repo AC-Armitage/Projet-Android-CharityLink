@@ -1,5 +1,11 @@
 package com.fpl.charitylink.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,14 +13,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.fpl.charitylink.viewmodel.PostNeedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,19 +34,43 @@ import com.fpl.charitylink.viewmodel.PostNeedViewModel
 fun PostNeedScreen(
     onBack: () -> Unit,
     onSuccess: () -> Unit,
-    campaignId: String? = null, // ← add this
+    campaignId: String? = null,
     viewModel: PostNeedViewModel = viewModel()
 ) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var goalAmount by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Food") }
-    var imageUrl by remember { mutableStateOf("") }
+    var manualImageUrl by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val categories = listOf("Food", "Clothes", "Health", "Education", "Other")
     var expanded by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsState()
+    val existingCampaign = uiState.existingCampaign
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) selectedImageUri = uri
+    }
+
+    LaunchedEffect(campaignId) {
+        if (!campaignId.isNullOrBlank()) {
+            viewModel.loadCampaign(campaignId)
+        }
+    }
+
+    LaunchedEffect(existingCampaign?.id) {
+        existingCampaign?.let { campaign ->
+            title = campaign.title
+            description = campaign.description
+            goalAmount = campaign.goalAmount.toString()
+            category = campaign.category.replaceFirstChar { it.uppercase() }
+            manualImageUrl = campaign.imageUrl.orEmpty()
+        }
+    }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -46,7 +82,7 @@ fun PostNeedScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Post a New Need") },
+                title = { Text(if (existingCampaign == null) "Post a New Need" else "Edit Need") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -123,9 +159,63 @@ fun PostNeedScreen(
                 }
             }
 
+            Text(
+                text = "Campaign Image",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            val currentImage = selectedImageUri ?: manualImageUrl.ifBlank { null }
+
+            if (currentImage != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(190.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                ) {
+                    AsyncImage(
+                        model = currentImage,
+                        contentDescription = "Campaign image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    IconButton(
+                        onClick = {
+                            selectedImageUri = null
+                            manualImageUrl = ""
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(50))
+                    ) {
+                        Icon(Icons.Outlined.Close, contentDescription = "Remove image")
+                    }
+                }
+            }
+
+            OutlinedButton(
+                onClick = {
+                    imagePickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (currentImage == null) "Upload Campaign Photo" else "Change Campaign Photo")
+            }
+
+            // Optional: keep URL support too, useful for testing or existing image links
             OutlinedTextField(
-                value = imageUrl,
-                onValueChange = { imageUrl = it },
+                value = manualImageUrl,
+                onValueChange = {
+                    manualImageUrl = it
+                    if (it.isNotBlank()) selectedImageUri = null
+                },
                 label = { Text("Image URL (Optional)") },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("https://example.com/image.jpg") }
@@ -139,7 +229,7 @@ fun PostNeedScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
@@ -148,7 +238,8 @@ fun PostNeedScreen(
                         description = description,
                         goalAmount = goalAmount.toDoubleOrNull() ?: 0.0,
                         category = category.lowercase(),
-                        imageUrl = imageUrl.ifBlank { null }
+                        selectedImageUri = selectedImageUri,
+                        imageUrl = manualImageUrl.ifBlank { null }
                     )
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -158,7 +249,7 @@ fun PostNeedScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
-                    Text("Publish Campaign", style = MaterialTheme.typography.titleMedium)
+                    Text(if (existingCampaign == null) "Publish Campaign" else "Save Changes", style = MaterialTheme.typography.titleMedium)
                 }
             }
         }

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">تشاريتي لينك</string>
+    <string name="app_tagline">نربط العطاء بالحاجة</string>
+
+    <!-- Splash -->
+    <string name="get_started">ابدأ الآن</string>
+    <string name="skip">تخطي</string>
+    <string name="next">التالي</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">تبرع بثقة</string>
+    <string name="onboarding_body_1">اكتشف الجمعيات والقضايا المحلية في مجتمعك.</string>
+    <string name="onboarding_title_2">تبرع بالمال أو الملابس أو الطعام</string>
+    <string name="onboarding_body_2">اختر طريقة العطاء المناسبة حسب الحاجات الحالية.</string>
+    <string name="onboarding_title_3">انضم إلى المجتمع</string>
+    <string name="onboarding_body_3">شاهد كيف تُغيّر مساهماتك حياة الناس من خلال تحديثات لحظية.</string>
+
+    <!-- Role Selection -->
+    <string name="role_question">كيف تريد استخدام تشاريتي لينك؟</string>
+    <string name="role_subtitle">اختر مسارك لتبدأ في إحداث فرق اليوم.</string>
+    <string name="role_verified_note">جميع الملفات الشخصية على تشاريتي لينك موثّقة لضمان أمان المجتمع وشفافيته.</string>
+    <string name="continue_btn">استمرار</string>
+    <string name="already_have_account">لديك حساب بالفعل؟ تسجيل الدخول</string>
+
+    <!-- Login -->
+    <string name="welcome_back">مرحباً بعودتك</string>
+    <string name="welcome_back_subtitle">استمر في رحلتك لإحداث تأثير اليوم.</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="email_placeholder">example@gmail.com</string>
+    <string name="password">كلمة المرور</string>
+    <string name="forgot_password">نسيت كلمة المرور؟</string>
+    <string name="log_in">تسجيل الدخول</string>
+    <string name="continue_with_google">الاستمرار باستخدام جوجل</string>
+    <string name="continue_with_facebook">الاستمرار باستخدام فيسبوك</string>
+    <string name="no_account_register">ليس لديك حساب؟ سجّل الآن</string>
+    <string name="facebook_coming_soon">تسجيل الدخول بفيسبوك متوفر قريباً</string>
+
+    <!-- Register -->
+    <string name="create_account">أنشئ حسابك</string>
+    <string name="create_account_subtitle">انضم إلى مجتمعنا من المتبرعين المؤثرين</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="full_name_placeholder">محمد أحمد</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="passwords_do_not_match">كلمتا المرور غير متطابقتين</string>
+    <string name="register">تسجيل</string>
+    <string name="terms_agreement">بإنشاء حساب، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بنا.</string>
+
+    <!-- Navigation / Bottom Bar -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_explore">استكشاف</string>
+    <string name="nav_donate">تبرع</string>
+    <string name="nav_messages">الرسائل</string>
+    <string name="nav_profile">الملف الشخصي</string>
+    <string name="nav_campaigns">الحملات</string>
+    <string name="nav_notifications">الإشعارات</string>
+    <string name="nav_settings">الإعدادات</string>
+
+    <!-- Donor Home -->
+    <string name="hello_user">مرحباً، %s</string>
+    <string name="welcome_back_user">مرحباً بعودتك،</string>
+    <string name="all_associations">جميع الجمعيات</string>
+    <string name="filter">تصفية</string>
+    <string name="apply_filters">تطبيق الفلاتر</string>
+    <string name="reset">إعادة تعيين</string>
+    <string name="filter_associations">تصفية الجمعيات</string>
+    <string name="show_verified_only">إظهار الجمعيات الموثّقة فقط</string>
+    <string name="category">الفئة</string>
+    <string name="verified_only">الموثّقة فقط</string>
+    <string name="urgent">عاجل</string>
+    <string name="donate_now">تبرع الآن</string>
+    <string name="view">عرض</string>
+    <string name="raised">تم جمعه</string>
+    <string name="all_urgent_needs">جميع الحاجات العاجلة</string>
+    <string name="view_all">عرض الكل</string>
+
+    <!-- Campaigns -->
+    <string name="active_campaigns">الحملات النشطة</string>
+    <string name="campaign_details">تفاصيل الحملة</string>
+    <string name="campaign_image">صورة الحملة</string>
+    <string name="about_campaign">حول هذه الحملة</string>
+    <string name="goal">الهدف</string>
+    <string name="goal_label">الهدف: %s</string>
+    <string name="raised_label">تم جمعه: %s</string>
+    <string name="no_campaigns_yet">لا توجد حملات متاحة حتى الآن.</string>
+    <string name="no_active_campaigns">لا توجد حملات نشطة.</string>
+
+    <!-- Donate Screen -->
+    <string name="donating_to">التبرع إلى</string>
+    <string name="choose_amount">اختر مبلغاً</string>
+    <string name="or_custom_amount">أو أدخل مبلغاً مخصصاً</string>
+    <string name="donate_button">تبرع %s</string>
+
+    <!-- Explore -->
+    <string name="search_placeholder">البحث بالاسم أو الوصف</string>
+    <string name="find_associations">البحث عن جمعيات...</string>
+    <string name="verified_association">جمعية موثّقة</string>
+    <string name="verified">موثّقة</string>
+
+    <!-- Profile / Edit Profile -->
+    <string name="save_changes">حفظ التغييرات</string>
+    <string name="email_cannot_change">لا يمكن تغيير البريد الإلكتروني</string>
+    <string name="add_message_optional">إضافة رسالة (اختياري)</string>
+
+    <!-- Association Home -->
+    <string name="my_needs">حاجاتي</string>
+    <string name="post_a_need">نشر حاجة</string>
+    <string name="total_donations">إجمالي التبرعات</string>
+    <string name="total_received_donations">إجمالي التبرعات المستلمة</string>
+
+    <!-- Post Need -->
+    <string name="need_title_placeholder">مثال: معاطف شتوية للأطفال</string>
+    <string name="image_url_placeholder">https://example.com/image.jpg</string>
+
+    <!-- Chat -->
+    <string name="no_conversations">لا توجد محادثات حتى الآن.</string>
+    <string name="donors_will_appear">سيظهر هنا المتبرعون الذين يراسلونك.</string>
+    <string name="say_hello">ابدأ المحادثة بقول مرحباً.</string>
+    <string name="type_message">اكتب رسالة...</string>
+    <string name="say_something">اكتب رسالة تشجيعية...</string>
+
+    <!-- Notifications -->
+    <string name="notifications">الإشعارات</string>
+    <string name="no_notifications">لا توجد إشعارات حتى الآن</string>
+    <string name="no_notifications_subtitle">سنخبرك عند حدوث أمر مهم.</string>
+    <string name="mark_all_read">تحديد الكل كمقروء</string>
+
+    <!-- Donations -->
+    <string name="total_donations_title">إجمالي التبرعات</string>
+    <string name="need_help">تحتاج مساعدة؟</string>
+    <string name="faq">الأسئلة الشائعة</string>
+    <string name="faq_contact">تواصل معنا مباشرة أو راجع الأسئلة الشائعة للحصول على إجابات سريعة.</string>
+
+    <!-- Settings -->
+    <string name="settings">الإعدادات</string>
+    <string name="settings_general">عام</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_notifications_section">الإشعارات</string>
+    <string name="settings_donation_alerts">تنبيهات التبرعات</string>
+    <string name="settings_donation_alerts_sub">احصل على إشعار بنشاط التبرعات</string>
+    <string name="settings_campaign_updates">تحديثات الحملات</string>
+    <string name="settings_campaign_updates_sub">حملات جديدة وإنجازات مهمة</string>
+    <string name="settings_system_notifs">إشعارات النظام</string>
+    <string name="settings_system_notifs_sub">تحديثات وإعلانات التطبيق</string>
+    <string name="settings_account">الحساب</string>
+    <string name="settings_change_password">تغيير كلمة المرور</string>
+    <string name="settings_change_password_sub">تحديث كلمة مرور حسابك</string>
+    <string name="settings_about">حول</string>
+    <string name="settings_about_charitylink">حول تشاريتي لينك</string>
+    <string name="settings_version">الإصدار 1.0.0</string>
+    <string name="settings_help_support">المساعدة والدعم</string>
+    <string name="settings_help_support_sub">الأسئلة الشائعة والتواصل معنا</string>
+    <string name="select_language">اختر اللغة</string>
+    <string name="done">تم</string>
+    <string name="cancel">إلغاء</string>
+    <string name="back">رجوع</string>
+
+    <!-- Change Password Dialog -->
+    <string name="change_password_title">تغيير كلمة المرور</string>
+    <string name="change_password_body">سيتم إرسال بريد إعادة تعيين كلمة المرور إلى:\n%s</string>
+    <string name="send_email">إرسال البريد الإلكتروني</string>
+    <string name="reset_email_sent">تم إرسال بريد إعادة التعيين إلى %s</string>
+
+    <!-- About Dialog -->
+    <string name="about_version">الإصدار: 1.0.0</string>
+    <string name="about_description">يربط تشاريتي لينك بين المتبرعين والجمعيات لجعل العطاء بسيطاً وشفافاً وفعالاً.</string>
+    <string name="about_built_by">صُمم بحب ❤️ من فريق تشاريتي لينك.</string>
+    <string name="close">إغلاق</string>
+
+    <!-- Placeholder screen -->
+    <string name="screen_not_implemented">هذه الشاشة قيد التنفيذ ولم تُفعَّل بعد.</string>
+
+    <!-- Errors / Misc -->
+    <string name="error_prefix">خطأ: %s</string>
+    <string name="verified_badge">موثّق</string>
+    <string name="password_placeholder">••••••••</string>
+</resources>

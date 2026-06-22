@@ -1,7 +1,12 @@
 package com.fpl.charitylink.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,10 +33,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fpl.charitylink.data.repository.UserRepository
+import com.fpl.charitylink.data.repository.OrganizationRepository
 import com.fpl.charitylink.viewmodel.AuthViewModel
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.storageMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 // ── ViewModel ──────────────────────────────────────────────
 sealed class EditProfileState {
@@ -43,11 +52,13 @@ sealed class EditProfileState {
 
 class EditProfileViewModel : ViewModel() {
     private val userRepository = UserRepository()
+    private val organizationRepository = OrganizationRepository()
+    private val storage = FirebaseStorage.getInstance()
 
     private val _state = MutableStateFlow<EditProfileState>(EditProfileState.Idle)
     val state: StateFlow<EditProfileState> = _state
 
-    fun saveProfile(uid: String, fullName: String) {
+    fun saveProfile(uid: String, fullName: String, role: String, selectedPhotoUri: Uri?) {
         if (fullName.isBlank()) {
             _state.value = EditProfileState.Error("Name cannot be empty")
             return
@@ -55,12 +66,36 @@ class EditProfileViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = EditProfileState.Loading
             try {
-                userRepository.updateUser(uid, mapOf("fullName" to fullName))
+                val updates = mutableMapOf<String, Any>("fullName" to fullName)
+
+                if (selectedPhotoUri != null) {
+                    val photoUrl = uploadProfilePhoto(uid, selectedPhotoUri)
+                    updates["photoUrl"] = photoUrl
+                }
+
+                // Update the user profile used by donor/profile screens.
+                userRepository.updateUser(uid, updates)
+
+                // If this account is an association, also update the organization document.
+                // The associations list reads name/logo from organizations, not users.
+                if (role == "association") {
+                    val orgUpdates = mutableMapOf<String, Any>("name" to fullName)
+                    updates["photoUrl"]?.let { orgUpdates["logoUrl"] = it }
+                    organizationRepository.updateOrganization(uid, orgUpdates)
+                }
+
                 _state.value = EditProfileState.Success
             } catch (e: Exception) {
                 _state.value = EditProfileState.Error(e.message ?: "Failed to update profile")
             }
         }
+    }
+
+    private suspend fun uploadProfilePhoto(uid: String, uri: Uri): String {
+        val ref = storage.reference.child("profile_photos/$uid.jpg")
+        val metadata = storageMetadata { contentType = "image/jpeg" }
+        ref.putFile(uri, metadata).await()
+        return ref.downloadUrl.await().toString()
     }
 
     fun resetState() { _state.value = EditProfileState.Idle }
@@ -82,8 +117,17 @@ fun EditProfileScreen(
         ?: firebaseUser?.email ?: ""
     val photoUrl = cachedUser["photoUrl"]?.ifBlank { null }
         ?: firebaseUser?.photoUrl?.toString()
+    val role = cachedUser["role"] ?: ""
 
     var fullName by rememberSaveable { mutableStateOf(initialName) }
+    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) selectedPhotoUri = uri
+    }
+
     val editState by editProfileViewModel.state.collectAsState()
     val isLoading = editState is EditProfileState.Loading
     val snackbarHostState = remember { SnackbarHostState() }
@@ -92,7 +136,6 @@ fun EditProfileScreen(
     LaunchedEffect(editState) {
         when (editState) {
             is EditProfileState.Success -> {
-                // Sync updated profile to cache
                 authViewModel.syncUserProfile()
                 snackbarHostState.showSnackbar("Profile updated successfully!")
                 editProfileViewModel.resetState()
@@ -144,7 +187,14 @@ fun EditProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Avatar with camera button
-            Box(contentAlignment = Alignment.BottomEnd) {
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier.clickable(enabled = !isLoading) {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
+            ) {
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -153,10 +203,11 @@ fun EditProfileScreen(
                         .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (photoUrl != null) {
+                    val imageToShow = selectedPhotoUri ?: photoUrl
+                    if (imageToShow != null) {
                         AsyncImage(
-                            model = photoUrl,
-                            contentDescription = null,
+                            model = imageToShow,
+                            contentDescription = "Profile photo",
                             modifier = Modifier.fillMaxSize().clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
@@ -185,13 +236,18 @@ fun EditProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Change Photo",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            TextButton(
+                onClick = {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
+                enabled = !isLoading
+            ) {
+                Text("Change Photo")
+            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Full Name field
             Card(
@@ -282,10 +338,10 @@ fun EditProfileScreen(
             Button(
                 onClick = {
                     firebaseUser?.uid?.let {
-                        editProfileViewModel.saveProfile(it, fullName)
+                        editProfileViewModel.saveProfile(it, fullName, role, selectedPhotoUri)
                     }
                 },
-                enabled = fullName.isNotBlank() && fullName != initialName && !isLoading,
+                enabled = fullName.isNotBlank() && (fullName != initialName || selectedPhotoUri != null) && !isLoading,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
