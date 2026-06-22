@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Category
@@ -37,6 +38,7 @@ fun NeedDetailScreen(
     onBack: () -> Unit,
     onAssociationClick: (String) -> Unit,
     onDonateClick: (String) -> Unit,
+    onMessageClick: (associationId: String, associationName: String) -> Unit = { _, _ -> },
     viewModel: NeedDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -147,24 +149,40 @@ fun NeedDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Association Info
-                    Surface(
-                        onClick = { onAssociationClick(campaign.associationId) },
-                        color = Color.Transparent
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            onClick = { onAssociationClick(campaign.associationId) },
+                            color = Color.Transparent,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.Business,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = campaign.associationName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { onMessageClick(campaign.associationId, campaign.associationName) },
+                            shape = RoundedCornerShape(50),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
                             Icon(
-                                Icons.Default.Business,
+                                Icons.AutoMirrored.Filled.Send,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = campaign.associationName,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Message", style = MaterialTheme.typography.labelMedium)
                         }
                     }
 

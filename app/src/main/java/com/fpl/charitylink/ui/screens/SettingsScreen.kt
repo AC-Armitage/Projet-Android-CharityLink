@@ -15,33 +15,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fpl.charitylink.MainActivity
+import com.fpl.charitylink.R
 import com.fpl.charitylink.viewmodel.AuthViewModel
 
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onSupport: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
 
-    // Language — read from persisted state, not throwaway remember
     var showLanguageDialog by remember { mutableStateOf(false) }
     val persistedLanguage by authViewModel.cachedLanguage.collectAsState()
     val languages = listOf("English", "French", "Arabic")
 
-    // Notification states
     var donationNotifs by remember { mutableStateOf(true) }
     var campaignNotifs by remember { mutableStateOf(true) }
     var systemNotifs by remember { mutableStateOf(false) }
 
-    // Change password dialog
     var showPasswordDialog by remember { mutableStateOf(false) }
     var passwordMessage by remember { mutableStateOf<String?>(null) }
 
-    // About dialog
     var showAboutDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -68,13 +67,13 @@ fun SettingsScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Settings",
+                    text = stringResource(R.string.settings),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -91,10 +90,10 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // ── Language ──────────────────────────────────
-            SettingsSectionHeader(title = "General")
+            SettingsSectionHeader(title = stringResource(R.string.settings_general))
             SettingsItem(
                 icon = Icons.Outlined.Language,
-                title = "Language",
+                title = stringResource(R.string.settings_language),
                 subtitle = persistedLanguage,
                 trailingContent = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -117,27 +116,27 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // ── Notifications ─────────────────────────────
-            SettingsSectionHeader(title = "Notifications")
+            SettingsSectionHeader(title = stringResource(R.string.settings_notifications_section))
             SettingsToggleItem(
                 icon = Icons.Outlined.VolunteerActivism,
-                title = "Donation Alerts",
-                subtitle = "Get notified about donation activity",
+                title = stringResource(R.string.settings_donation_alerts),
+                subtitle = stringResource(R.string.settings_donation_alerts_sub),
                 checked = donationNotifs,
                 onCheckedChange = { donationNotifs = it }
             )
             Spacer(modifier = Modifier.height(4.dp))
             SettingsToggleItem(
                 icon = Icons.Outlined.Campaign,
-                title = "Campaign Updates",
-                subtitle = "New campaigns and milestones",
+                title = stringResource(R.string.settings_campaign_updates),
+                subtitle = stringResource(R.string.settings_campaign_updates_sub),
                 checked = campaignNotifs,
                 onCheckedChange = { campaignNotifs = it }
             )
             Spacer(modifier = Modifier.height(4.dp))
             SettingsToggleItem(
                 icon = Icons.Outlined.Notifications,
-                title = "System Notifications",
-                subtitle = "App updates and announcements",
+                title = stringResource(R.string.settings_system_notifs),
+                subtitle = stringResource(R.string.settings_system_notifs_sub),
                 checked = systemNotifs,
                 onCheckedChange = { systemNotifs = it }
             )
@@ -145,11 +144,11 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // ── Account ───────────────────────────────────
-            SettingsSectionHeader(title = "Account")
+            SettingsSectionHeader(title = stringResource(R.string.settings_account))
             SettingsItem(
                 icon = Icons.Outlined.Lock,
-                title = "Change Password",
-                subtitle = "Update your account password",
+                title = stringResource(R.string.settings_change_password),
+                subtitle = stringResource(R.string.settings_change_password_sub),
                 trailingContent = {
                     Icon(
                         imageVector = Icons.Outlined.ChevronRight,
@@ -163,11 +162,11 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // ── About ─────────────────────────────────────
-            SettingsSectionHeader(title = "About")
+            SettingsSectionHeader(title = stringResource(R.string.settings_about))
             SettingsItem(
                 icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                title = "About CharityLink",
-                subtitle = "Version 1.0.0",
+                title = stringResource(R.string.settings_about_charitylink),
+                subtitle = stringResource(R.string.settings_version),
                 trailingContent = {
                     Icon(
                         imageVector = Icons.Outlined.ChevronRight,
@@ -177,6 +176,20 @@ fun SettingsScreen(
                 },
                 onClick = { showAboutDialog = true }
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            SettingsItem(
+                icon = Icons.Outlined.SupportAgent,
+                title = stringResource(R.string.settings_help_support),
+                subtitle = stringResource(R.string.settings_help_support_sub),
+                trailingContent = {
+                    Icon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outlineVariant
+                    )
+                },
+                onClick = onSupport
+            )
         }
     }
 
@@ -184,7 +197,7 @@ fun SettingsScreen(
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text("Select Language") },
+            title = { Text(stringResource(R.string.select_language)) },
             text = {
                 Column {
                     languages.forEach { language ->
@@ -195,10 +208,9 @@ fun SettingsScreen(
                             RadioButton(
                                 selected = persistedLanguage == language,
                                 onClick = {
-                                    // Persist to DataStore
                                     authViewModel.saveLanguage(language)
-                                    // Apply locale immediately — activity will recreate
-                                    MainActivity.applyLocale(language)
+                                    MainActivity.applyLocale(context, language)
+                                    (context as? android.app.Activity)?.recreate()
                                 }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -209,7 +221,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Done")
+                    Text(stringResource(R.string.done))
                 }
             }
         )
@@ -220,28 +232,29 @@ fun SettingsScreen(
         val user = authViewModel.currentUser
         AlertDialog(
             onDismissRequest = { showPasswordDialog = false },
-            title = { Text("Change Password") },
+            title = { Text(stringResource(R.string.change_password_title)) },
             text = {
                 Text(
-                    text = "A password reset email will be sent to:\n${user?.email}",
+                    text = stringResource(R.string.change_password_body, user?.email ?: ""),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
+                val resetSentMsg = stringResource(R.string.reset_email_sent, user?.email ?: "")
                 Button(onClick = {
                     user?.email?.let { email ->
                         com.google.firebase.auth.FirebaseAuth.getInstance()
                             .sendPasswordResetEmail(email)
                     }
                     showPasswordDialog = false
-                    passwordMessage = "Reset email sent to ${user?.email}"
+                    passwordMessage = resetSentMsg
                 }) {
-                    Text("Send Email")
+                    Text(stringResource(R.string.send_email))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPasswordDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -251,17 +264,17 @@ fun SettingsScreen(
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
-            title = { Text("About CharityLink") },
+            title = { Text(stringResource(R.string.settings_about_charitylink)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Version: 1.0.0", style = MaterialTheme.typography.bodyMedium)
-                    Text("CharityLink connects donors with associations to make giving simple, transparent, and impactful.", style = MaterialTheme.typography.bodyMedium)
-                    Text("Built with ❤️ by the CharityLink team.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.about_version), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.about_description), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.about_built_by), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.close))
                 }
             }
         )

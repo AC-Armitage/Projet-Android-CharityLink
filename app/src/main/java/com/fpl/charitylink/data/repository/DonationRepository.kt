@@ -49,4 +49,28 @@ class DonationRepository {
             .toObjects(Donation::class.java)
             .sumOf { it.amount }
     }
+
+    suspend fun deleteDonation(donationId: String) {
+        donations.document(donationId).delete().await()
+    }
+
+    suspend fun deleteDonations(donationIds: List<String>) {
+        if (donationIds.isEmpty()) return
+        val batch = db.batch()
+        donationIds.forEach { id ->
+            batch.delete(donations.document(id))
+        }
+        batch.commit().await()
+    }
+
+    suspend fun deleteAllDonorDonations(donorId: String) {
+        val all = donations
+            .whereEqualTo("donorId", donorId)
+            .get().await()
+        val batch = db.batch()
+        all.documents.forEach { doc ->
+            batch.delete(doc.reference)
+        }
+        batch.commit().await()
+    }
 }

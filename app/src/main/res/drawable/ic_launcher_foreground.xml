@@ -1,30 +1,24 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+    <!--
+        App launcher icon foreground: the same "volunteer activism" (hand holding heart)
+        icon already used throughout the app's UI (Login/Register branding box, etc.),
+        scaled and centered to fill the adaptive-icon safe zone.
+        Original glyph is Google's Material Symbols "volunteer_activism" (Apache 2.0),
+        24x24 viewBox, scaled 2.667x and centered via the group transform below.
+    -->
+    <group
+        android:translateX="22"
+        android:translateY="22"
+        android:scaleX="2.6667"
+        android:scaleY="2.6667">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M7,20.025V11h1.6q0.175,0 0.35,0.038t0.35,0.087l6.925,2.575q0.35,0.125 0.563,0.45t0.212,0.675q0,0.525 -0.363,0.85T15.8,16h-2.625q-0.125,0 -0.187,-0.012t-0.163,-0.063l-1.6,-0.625l-0.325,0.975l1.925,0.675q0.05,0.025 0.15,0.038t0.175,0.012H20q0.8,0 1.4,0.575T22,19l-7.975,3z
+                M1,22V11h4v11z
+                M16,13l-4.15,-4.05q-0.775,-0.75 -1.312,-1.662T10,5.3q0,-1.375 0.963,-2.337T13.3,2q0.8,0 1.5,0.338t1.2,0.912q0.5,-0.575 1.2,-0.913T18.7,2q1.375,0 2.338,0.963T22,5.3q0,1.075 -0.525,1.988t-1.3,1.662z" />
+    </group>
 </vector>

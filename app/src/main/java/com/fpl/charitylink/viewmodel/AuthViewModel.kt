@@ -97,7 +97,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     fullName = firestoreUser?.fullName ?: user.displayName ?: "",
                     email = user.email ?: "",
                     role = role,
-                    photoUrl = user.photoUrl?.toString()
+                    // Prefer the Firestore photoUrl (set by EditProfileScreen) over the
+                    // Firebase Auth photoUrl, which is only populated for social sign-ins.
+                    photoUrl = firestoreUser?.photoUrl ?: user.photoUrl?.toString()
                 )
                 _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
@@ -164,17 +166,27 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- Sync profile from Firestore (call on app start) ---
+    // --- Sync profile from Firestore (call on app start and after profile edits) ---
     fun syncUserProfile() {
         viewModelScope.launch {
             val uid = auth.currentUser?.uid ?: return@launch
             val user = userRepository.syncUser(uid) ?: return@launch
+
+            // For associations, the profile photo is stored as logoUrl in the
+            // organizations collection, not as photoUrl in the users collection.
+            // Read it from there so the cache always reflects the correct avatar.
+            val photoUrl = if (user.role == "association") {
+                organizationRepository.getOrganization(uid)?.logoUrl ?: user.photoUrl
+            } else {
+                user.photoUrl
+            }
+
             userPrefs.saveUser(
                 uid = user.uid,
                 fullName = user.fullName,
                 email = user.email,
                 role = user.role,
-                photoUrl = user.photoUrl
+                photoUrl = photoUrl
             )
         }
     }

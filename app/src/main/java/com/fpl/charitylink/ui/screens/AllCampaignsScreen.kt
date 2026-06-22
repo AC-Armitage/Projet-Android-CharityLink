@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,7 +19,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,6 +71,7 @@ class AllCampaignsViewModel : ViewModel() {
 fun AllCampaignsScreen(
     onBack: () -> Unit,
     onCampaignClick: (String) -> Unit = {},
+    onMessageClick: (associationId: String, associationName: String) -> Unit = { _, _ -> },
     viewModel: AllCampaignsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -134,7 +138,7 @@ fun AllCampaignsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No campaigns available yet.",
+                        text = stringResource(R.string.no_campaigns_yet),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -149,9 +153,10 @@ fun AllCampaignsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.campaigns) { campaign ->
-                        CampaignCard(
+                        AllCampaignCard(
                             campaign = campaign,
-                            onClick = { onCampaignClick(campaign.id) }
+                            onClick = { onCampaignClick(campaign.id) },
+                            onMessageClick = { onMessageClick(campaign.associationId, campaign.associationName) }
                         )
                     }
                 }
@@ -161,7 +166,7 @@ fun AllCampaignsScreen(
 }
 
 @Composable
-private fun AllCampaignCard(campaign: Campaign, onClick: () -> Unit) {
+private fun AllCampaignCard(campaign: Campaign, onClick: () -> Unit, onMessageClick: () -> Unit = {}) {
     val progress = if (campaign.goalAmount > 0.0)
         min(1f, (campaign.raisedAmount / campaign.goalAmount).toFloat())
     else 0f
@@ -244,19 +249,38 @@ private fun AllCampaignCard(campaign: Campaign, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = campaign.associationName.ifBlank { "Association" },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocationOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = campaign.associationName.ifBlank { "Association" },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(
+                        onClick = onMessageClick,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.Send,
+                            contentDescription = "Message ${campaign.associationName.ifBlank { "the foundation" }}",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

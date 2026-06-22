@@ -12,7 +12,10 @@ import kotlinx.coroutines.launch
 data class DonationsUiState(
     val isLoading: Boolean = true,
     val donations: List<Donation> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val selectionMode: Boolean = false,
+    val selectedIds: Set<String> = emptySet(),
+    val isDeleting: Boolean = false
 )
 
 class DonationsViewModel : ViewModel() {
@@ -22,7 +25,11 @@ class DonationsViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(DonationsUiState())
     val uiState: StateFlow<DonationsUiState> = _uiState
 
+    // Remember which load function was used so we can refresh after deleting
+    private var isAssociationContext = false
+
     fun loadDonorDonations() {
+        isAssociationContext = false
         val userId = auth?.currentUser?.uid ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
@@ -39,6 +46,7 @@ class DonationsViewModel : ViewModel() {
     }
 
     fun loadAssociationDonations() {
+        isAssociationContext = true
         val userId = auth?.currentUser?.uid ?: return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
@@ -51,6 +59,76 @@ class DonationsViewModel : ViewModel() {
                 _uiState.value = DonationsUiState(
                     isLoading = false, 
                     errorMessage = e.message ?: "Failed to load donations"
+                )
+            }
+        }
+    }
+
+    private fun refresh() {
+        if (isAssociationContext) loadAssociationDonations() else loadDonorDonations()
+    }
+
+    fun setSelectionMode(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(
+            selectionMode = enabled,
+            selectedIds = if (enabled) _uiState.value.selectedIds else emptySet()
+        )
+    }
+
+    fun toggleSelected(donationId: String) {
+        val current = _uiState.value.selectedIds
+        val updated = if (current.contains(donationId)) current - donationId else current + donationId
+        _uiState.value = _uiState.value.copy(selectedIds = updated)
+    }
+
+    fun selectAll() {
+        _uiState.value = _uiState.value.copy(
+            selectedIds = _uiState.value.donations.map { it.id }.toSet()
+        )
+    }
+
+    fun clearSelection() {
+        _uiState.value = _uiState.value.copy(selectedIds = emptySet())
+    }
+
+    fun deleteSelected() {
+        val ids = _uiState.value.selectedIds.toList()
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDeleting = true)
+            try {
+                donationRepository.deleteDonations(ids)
+                _uiState.value = _uiState.value.copy(
+                    isDeleting = false,
+                    selectionMode = false,
+                    selectedIds = emptySet()
+                )
+                refresh()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isDeleting = false,
+                    errorMessage = e.message ?: "Failed to delete donations"
+                )
+            }
+        }
+    }
+
+    fun deleteAll() {
+        val userId = auth?.currentUser?.uid ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isDeleting = true)
+            try {
+                donationRepository.deleteAllDonorDonations(userId)
+                _uiState.value = _uiState.value.copy(
+                    isDeleting = false,
+                    selectionMode = false,
+                    selectedIds = emptySet()
+                )
+                refresh()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isDeleting = false,
+                    errorMessage = e.message ?: "Failed to delete donations"
                 )
             }
         }
