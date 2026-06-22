@@ -21,7 +21,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fpl.charitylink.ui.theme.PrimaryFixedDim
@@ -226,14 +228,14 @@ fun DonorHomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "All Associations", style = MaterialTheme.typography.headlineMedium)
+                    Text(text = stringResource(R.string.all_associations), style = MaterialTheme.typography.headlineMedium)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable { showFilterSheet = true }
                     ) {
                         Icon(Icons.Outlined.FilterList, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Filter", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                        Text(text = stringResource(R.string.filter), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
                         if (selectedFilter != "All" || showVerifiedOnly) {
                             Spacer(modifier = Modifier.width(4.dp))
                             Box(modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
@@ -295,14 +297,14 @@ fun FilterBottomSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Filter Associations", style = MaterialTheme.typography.headlineSmall)
+                Text(text = stringResource(R.string.filter_associations), style = MaterialTheme.typography.headlineSmall)
                 TextButton(onClick = onReset) {
-                    Text(text = "Reset", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
+                    Text(text = stringResource(R.string.reset), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Category", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(text = stringResource(R.string.category), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 filters.forEach { filter ->
@@ -326,8 +328,8 @@ fun FilterBottomSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text(text = "Verified Only", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
-                        Text(text = "Show only verified associations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = stringResource(R.string.verified_only), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = stringResource(R.string.show_verified_only), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
                         checked = showVerifiedOnly,
@@ -347,7 +349,7 @@ fun FilterBottomSheet(
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text(text = "Apply Filters", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.apply_filters), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -395,7 +397,7 @@ private fun DonorTopBar(displayName: String = "", photoUrl: String? = null, onNo
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(text = "Welcome back,", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = stringResource(R.string.welcome_back_user), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(text = "Hello, $displayName", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
             }
         }
@@ -427,7 +429,7 @@ private fun UrgentNeedCard(need: UrgentNeed, onClick: () -> Unit) {
             Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000)))))
             Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Surface(color = Color(0xFFF9A825), shape = RoundedCornerShape(50)) {
-                    Text(text = "Urgent", modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text = stringResource(R.string.urgent), modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onBackground)
                 }
                 Column {
                     Text(text = need.title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
@@ -442,7 +444,7 @@ private fun UrgentNeedCard(need: UrgentNeed, onClick: () -> Unit) {
                     Surface(color = Color.White.copy(alpha = 0.12f), shape = RoundedCornerShape(16.dp)) {
                         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column {
-                                Text(text = "Raised", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                                Text(text = stringResource(R.string.raised), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
                                 Text(text = need.raised, style = MaterialTheme.typography.headlineSmall, color = Color.White)
                             }
                             Box(contentAlignment = Alignment.Center) {
@@ -480,7 +482,7 @@ private fun AssociationCard(association: AssociationItem, onViewClick: () -> Uni
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(onClick = onViewClick, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
-                Text(text = "View", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.view), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -491,7 +493,7 @@ private fun DonateFab(onClick: () -> Unit) {
     Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer), shape = RoundedCornerShape(18.dp)) {
         Icon(Icons.Outlined.VolunteerActivism, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "Donate Now", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
+        Text(text = stringResource(R.string.donate_now), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
     }
 }
 

@@ -1,3 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App -->
     <string name="app_name">CharityLink</string>
+    <string name="app_tagline">Connecting generosity with need</string>
+
+    <!-- Splash -->
+    <string name="get_started">Get started</string>
+    <string name="skip">Skip</string>
+    <string name="next">Next</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Give with confidence</string>
+    <string name="onboarding_body_1">Discover charities and local causes in your community.</string>
+    <string name="onboarding_title_2">Donate money, clothes, or food</string>
+    <string name="onboarding_body_2">Choose the way you want to give based on current needs.</string>
+    <string name="onboarding_title_3">Join the community</string>
+    <string name="onboarding_body_3">See how your contributions change lives with real-time updates.</string>
+
+    <!-- Role Selection -->
+    <string name="role_question">How would you like to use CharityLink?</string>
+    <string name="role_subtitle">Select your path to start making a difference today.</string>
+    <string name="role_verified_note">All profiles on CharityLink are verified to ensure community safety and transparency.</string>
+    <string name="continue_btn">Continue</string>
+    <string name="already_have_account">Already have an account? Log in</string>
+
+    <!-- Login -->
+    <string name="welcome_back">Welcome back</string>
+    <string name="welcome_back_subtitle">Continue your journey of making an impact today.</string>
+    <string name="email">Email</string>
+    <string name="email_placeholder">example@gmail.com</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="log_in">Log in</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="continue_with_facebook">Continue with Facebook</string>
+    <string name="no_account_register">Don\'t have an account? Register</string>
+    <string name="facebook_coming_soon">Facebook login is coming soon</string>
+
+    <!-- Register -->
+    <string name="create_account">Create your account</string>
+    <string name="create_account_subtitle">Join our community of impactful donors</string>
+    <string name="full_name">Full Name</string>
+    <string name="full_name_placeholder">John Doe</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="register">Register</string>
+    <string name="terms_agreement">By creating an account, you agree to our Terms of Service and Privacy Policy.</string>
+
+    <!-- Navigation / Bottom Bar -->
+    <string name="nav_home">Home</string>
+    <string name="nav_explore">Explore</string>
+    <string name="nav_donate">Donate</string>
+    <string name="nav_messages">Messages</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_campaigns">Campaigns</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Donor Home -->
+    <string name="hello_user">Hello, %s</string>
+    <string name="welcome_back_user">Welcome back,</string>
+    <string name="all_associations">All Associations</string>
+    <string name="filter">Filter</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="reset">Reset</string>
+    <string name="filter_associations">Filter Associations</string>
+    <string name="show_verified_only">Show only verified associations</string>
+    <string name="category">Category</string>
+    <string name="verified_only">Verified Only</string>
+    <string name="urgent">Urgent</string>
+    <string name="donate_now">Donate Now</string>
+    <string name="view">View</string>
+    <string name="raised">Raised</string>
+    <string name="all_urgent_needs">All Urgent Needs</string>
+    <string name="view_all">View All</string>
+
+    <!-- Campaigns -->
+    <string name="active_campaigns">Active Campaigns</string>
+    <string name="campaign_details">Campaign Details</string>
+    <string name="campaign_image">Campaign Image</string>
+    <string name="about_campaign">About this campaign</string>
+    <string name="goal">Goal</string>
+    <string name="goal_label">Goal: %s</string>
+    <string name="raised_label">Raised: %s</string>
+    <string name="no_campaigns_yet">No campaigns available yet.</string>
+    <string name="no_active_campaigns">No active campaigns found.</string>
+
+    <!-- Donate Screen -->
+    <string name="donating_to">Donating to</string>
+    <string name="choose_amount">Choose an amount</string>
+    <string name="or_custom_amount">Or enter a custom amount</string>
+    <string name="donate_button">Donate %s</string>
+
+    <!-- Explore -->
+    <string name="search_placeholder">Search by name or description</string>
+    <string name="find_associations">Find associations...</string>
+    <string name="verified_association">Verified Association</string>
+    <string name="verified">Verified</string>
+
+    <!-- Profile / Edit Profile -->
+    <string name="save_changes">Save Changes</string>
+    <string name="email_cannot_change">Email cannot be changed</string>
+    <string name="add_message_optional">Add a message (optional)</string>
+
+    <!-- Association Home -->
+    <string name="my_needs">My Needs</string>
+    <string name="post_a_need">Post a Need</string>
+    <string name="total_donations">Total Donations</string>
+    <string name="total_received_donations">Total received donations</string>
+
+    <!-- Post Need -->
+    <string name="need_title_placeholder">e.g., Winter Coats for Kids</string>
+    <string name="image_url_placeholder">https://example.com/image.jpg</string>
+
+    <!-- Chat -->
+    <string name="no_conversations">No conversations yet.</string>
+    <string name="donors_will_appear">Donors who message you will appear here.</string>
+    <string name="say_hello">Say hello to start the conversation.</string>
+    <string name="type_message">Type a message...</string>
+    <string name="say_something">Say something encouraging...</string>
+
+    <!-- Notifications -->
+    <string name="notifications">Notifications</string>
+    <string name="no_notifications">No notifications yet</string>
+    <string name="no_notifications_subtitle">We\'ll let you know when something important happens.</string>
+    <string name="mark_all_read">Mark all read</string>
+
+    <!-- Donations -->
+    <string name="total_donations_title">Total Donations</string>
+    <string name="need_help">Need help?</string>
+    <string name="faq">Frequently Asked Questions</string>
+    <string name="faq_contact">Reach out to us directly or check the FAQ for quick answers to common questions.</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="settings_general">General</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_notifications_section">Notifications</string>
+    <string name="settings_donation_alerts">Donation Alerts</string>
+    <string name="settings_donation_alerts_sub">Get notified about donation activity</string>
+    <string name="settings_campaign_updates">Campaign Updates</string>
+    <string name="settings_campaign_updates_sub">New campaigns and milestones</string>
+    <string name="settings_system_notifs">System Notifications</string>
+    <string name="settings_system_notifs_sub">App updates and announcements</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_change_password">Change Password</string>
+    <string name="settings_change_password_sub">Update your account password</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_charitylink">About CharityLink</string>
+    <string name="settings_version">Version 1.0.0</string>
+    <string name="settings_help_support">Help &amp; Support</string>
+    <string name="settings_help_support_sub">FAQ and contact us</string>
+    <string name="select_language">Select Language</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+
+    <!-- Change Password Dialog -->
+    <string name="change_password_title">Change Password</string>
+    <string name="change_password_body">A password reset email will be sent to:\n%s</string>
+    <string name="send_email">Send Email</string>
+    <string name="reset_email_sent">Reset email sent to %s</string>
+
+    <!-- About Dialog -->
+    <string name="about_version">Version: 1.0.0</string>
+    <string name="about_description">CharityLink connects donors with associations to make giving simple, transparent, and impactful.</string>
+    <string name="about_built_by">Built with ❤️ by the CharityLink team.</string>
+    <string name="close">Close</string>
+
+    <!-- Placeholder screen -->
+    <string name="screen_not_implemented">This screen is wired but not implemented yet.</string>
+
+    <!-- Errors / Misc -->
+    <string name="error_prefix">Error: %s</string>
+    <string name="verified_badge">Verified</string>
+    <string name="password_placeholder">••••••••</string>
 </resources>

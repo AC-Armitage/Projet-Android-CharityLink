@@ -28,7 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -385,7 +387,7 @@ fun EditProfileScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Email",
+                        text = stringResource(R.string.email),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -411,7 +413,7 @@ fun EditProfileScreen(
                         )
                     )
                     Text(
-                        text = "Email cannot be changed",
+                        text = stringResource(R.string.email_cannot_change),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp)
@@ -443,7 +445,7 @@ fun EditProfileScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text(text = "Save Changes", style = MaterialTheme.typography.labelLarge)
+                    Text(text = stringResource(R.string.save_changes), style = MaterialTheme.typography.labelLarge)
                 }
             }
 

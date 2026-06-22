@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fpl.charitylink.R
 import com.fpl.charitylink.viewmodel.AuthState
 import com.fpl.charitylink.viewmodel.AuthViewModel
 import com.fpl.charitylink.ui.theme.*
@@ -31,6 +34,7 @@ fun LoginScreen(
 ) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var showFacebookComingSoon by remember { mutableStateOf(false) }
 
     val authState by authViewModel.authState.collectAsState()
@@ -45,9 +49,7 @@ fun LoginScreen(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         Box(modifier = Modifier.size(220.dp).align(Alignment.TopEnd).background(PrimaryFixed.copy(alpha = 0.2f), CircleShape))
         Box(modifier = Modifier.size(220.dp).align(Alignment.BottomStart).background(TertiaryFixedDim.copy(alpha = 0.2f), CircleShape))
 
@@ -64,7 +66,7 @@ fun LoginScreen(
                     Icon(imageVector = Icons.Outlined.VolunteerActivism, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "CharityLink", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -74,9 +76,9 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
-                    Text(text = "Welcome back", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text = stringResource(R.string.welcome_back), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Continue your journey of making an impact today.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = stringResource(R.string.welcome_back_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(20.dp))
 
                     if (errorMessage != null) {
@@ -84,30 +86,38 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    Text(text = "Email", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = stringResource(R.string.email), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(6.dp))
                     TextField(
                         value = email, onValueChange = { email = it }, singleLine = true,
-                        placeholder = { Text("example_fpl@gmail.com") },
+                        placeholder = { Text(stringResource(R.string.email_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                         colors = TextFieldDefaults.colors(focusedContainerColor = SurfaceContainerLow, unfocusedContainerColor = SurfaceContainerLow, focusedIndicatorColor = MaterialTheme.colorScheme.primary, unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(text = "Password", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = stringResource(R.string.password), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(6.dp))
                     TextField(
                         value = password, onValueChange = { password = it }, singleLine = true,
-                        placeholder = { Text("••••••••") },
+                        placeholder = { Text(stringResource(R.string.password_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                        visualTransformation = PasswordVisualTransformation(),
-                        trailingIcon = { Icon(imageVector = Icons.Outlined.Visibility, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
                         colors = TextFieldDefaults.colors(focusedContainerColor = SurfaceContainerLow, unfocusedContainerColor = SurfaceContainerLow, focusedIndicatorColor = MaterialTheme.colorScheme.primary, unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceVariant)
                     )
                     TextButton(onClick = { }, modifier = Modifier.align(Alignment.End)) {
-                        Text(text = "Forgot password?", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Text(text = stringResource(R.string.forgot_password), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -119,37 +129,21 @@ fun LoginScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
                     ) {
                         if (isLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        else Text(text = "Log in", style = MaterialTheme.typography.labelLarge)
+                        else Text(text = stringResource(R.string.log_in), style = MaterialTheme.typography.labelLarge)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedButton(
-                        onClick = { authViewModel.signInWithGoogle(context, role) },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Text(text = "Continue with Google", style = MaterialTheme.typography.labelLarge)
+                    OutlinedButton(onClick = { authViewModel.signInWithGoogle(context, role) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(50)) {
+                        Text(text = stringResource(R.string.continue_with_google), style = MaterialTheme.typography.labelLarge)
                     }
-
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedButton(
-                        onClick = { showFacebookComingSoon = true },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Text(text = "Continue with Facebook", style = MaterialTheme.typography.labelLarge)
+                    OutlinedButton(onClick = { showFacebookComingSoon = true }, enabled = !isLoading, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(50)) {
+                        Text(text = stringResource(R.string.continue_with_facebook), style = MaterialTheme.typography.labelLarge)
                     }
                     if (showFacebookComingSoon) {
+                        val msg = stringResource(R.string.facebook_coming_soon)
                         LaunchedEffect(Unit) {
-                            android.widget.Toast.makeText(
-                                context,
-                                "Facebook login is coming soon",
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
                             showFacebookComingSoon = false
                         }
                     }
@@ -158,7 +152,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             TextButton(onClick = onCreateAccount) {
-                Text(text = "Don't have an account? Register", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = stringResource(R.string.no_account_register), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

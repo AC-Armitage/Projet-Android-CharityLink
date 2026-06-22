@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fpl.charitylink.data.model.Organization
@@ -54,7 +56,7 @@ fun DonorExploreScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    placeholder = { Text("Search by name or description") },
+                    placeholder = { Text(stringResource(R.string.search_placeholder)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
@@ -158,7 +160,7 @@ fun SimpleAssociationCard(organization: Organization, onClick: () -> Unit) {
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = "Verified",
+                            text = stringResource(R.string.verified),
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer

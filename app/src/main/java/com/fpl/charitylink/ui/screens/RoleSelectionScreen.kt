@@ -36,7 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import com.fpl.charitylink.ui.theme.PrimaryFixedDim
 import com.fpl.charitylink.ui.theme.SurfaceContainerLow
 import com.fpl.charitylink.ui.theme.SurfaceContainerLowest
@@ -90,13 +92,13 @@ fun RoleSelectionScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "How would you like to use CharityLink?",
+                    text = stringResource(R.string.role_question),
                     style = MaterialTheme.typography.headlineLarge,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Select your path to start making a difference today.",
+                    text = stringResource(R.string.role_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -137,7 +139,7 @@ fun RoleSelectionScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "All profiles on CharityLink are verified to ensure community safety and transparency.",
+                        text = stringResource(R.string.role_verified_note),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 12.dp)
@@ -152,7 +154,7 @@ fun RoleSelectionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50)
             ) {
-                Text(text = "Continue", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.continue_btn), style = MaterialTheme.typography.labelLarge)
                 Spacer(modifier = Modifier.width(8.dp))
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Outlined.ArrowForward,
@@ -161,7 +163,7 @@ fun RoleSelectionScreen(
             }
             TextButton(onClick = { onCreateAccount(selectedRole ?: "donor") }) {
                 Text(
-                    text = "Already have an account? Log in",
+                    text = stringResource(R.string.already_have_account),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

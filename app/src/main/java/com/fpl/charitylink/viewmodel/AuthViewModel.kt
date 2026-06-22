@@ -19,8 +19,6 @@ import com.fpl.charitylink.data.repository.UserRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import android.net.Uri
-import com.google.firebase.storage.FirebaseStorage
 import com.fpl.charitylink.data.model.Organization
 import com.fpl.charitylink.data.repository.OrganizationRepository
 
@@ -99,7 +97,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     fullName = firestoreUser?.fullName ?: user.displayName ?: "",
                     email = user.email ?: "",
                     role = role,
-                    photoUrl = user.photoUrl?.toString()
+                    // Prefer the Firestore photoUrl (set by EditProfileScreen) over the
+                    // Firebase Auth photoUrl, which is only populated for social sign-ins.
+                    photoUrl = firestoreUser?.photoUrl ?: user.photoUrl?.toString()
                 )
                 _authState.value = AuthState.Success(user, role)
             } catch (e: Exception) {
@@ -166,17 +166,27 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- Sync profile from Firestore (call on app start) ---
+    // --- Sync profile from Firestore (call on app start and after profile edits) ---
     fun syncUserProfile() {
         viewModelScope.launch {
             val uid = auth.currentUser?.uid ?: return@launch
             val user = userRepository.syncUser(uid) ?: return@launch
+
+            // For associations, the profile photo is stored as logoUrl in the
+            // organizations collection, not as photoUrl in the users collection.
+            // Read it from there so the cache always reflects the correct avatar.
+            val photoUrl = if (user.role == "association") {
+                organizationRepository.getOrganization(uid)?.logoUrl ?: user.photoUrl
+            } else {
+                user.photoUrl
+            }
+
             userPrefs.saveUser(
                 uid = user.uid,
                 fullName = user.fullName,
                 email = user.email,
                 role = user.role,
-                photoUrl = user.photoUrl
+                photoUrl = photoUrl
             )
         }
     }
@@ -199,42 +209,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun saveLanguage(language: String) {
         viewModelScope.launch {
             userPrefs.saveLanguage(language)
-        }
-    }
-
-    // --- Upload profile photo and persist URL ---
-    fun updatePhotoUrl(
-        imageUri: Uri,
-        onResult: (success: Boolean, error: String?) -> Unit
-    ) {
-        val uid = auth.currentUser?.uid ?: run {
-            onResult(false, "Not logged in")
-            return
-        }
-        viewModelScope.launch {
-            try {
-                val storageRef = FirebaseStorage.getInstance()
-                    .reference
-                    .child("profile_photos/$uid.jpg")
-                // Upload bytes
-                storageRef.putFile(imageUri).await()
-                // Get public download URL
-                val downloadUrl = storageRef.downloadUrl.await().toString()
-                // Persist to Firestore
-                userRepository.updateUser(uid, mapOf("photoUrl" to downloadUrl))
-                // Sync local cache (read current snapshot from the StateFlow)
-                val current = cachedUser.value
-                userPrefs.saveUser(
-                    uid = uid,
-                    fullName = current["fullName"] ?: "",
-                    email = current["email"] ?: "",
-                    role = current["role"] ?: "",
-                    photoUrl = downloadUrl
-                )
-                onResult(true, null)
-            } catch (e: Exception) {
-                onResult(false, e.message ?: "Upload failed")
-            }
         }
     }
 

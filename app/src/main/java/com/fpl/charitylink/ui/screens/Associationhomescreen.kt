@@ -19,7 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fpl.charitylink.ui.theme.SurfaceContainerHigh
@@ -168,9 +170,9 @@ fun AssociationHomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "My Needs", style = MaterialTheme.typography.headlineMedium)
+                    Text(text = stringResource(R.string.my_needs), style = MaterialTheme.typography.headlineMedium)
                     Text(
-                        text = "View All",
+                        text = stringResource(R.string.view_all),
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelLarge
                     )
@@ -231,7 +233,7 @@ private fun AssociationTopBar(logoUrl: String? = null, onNotificationsClick: () 
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "CharityLink",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -267,7 +269,7 @@ private fun SummaryGrid(activeNeeds: Int, totalDonations: Double = 0.0, donorsCo
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = "Total Donations", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(text = stringResource(R.string.total_donations), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Icon(Icons.Outlined.Payments, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
@@ -276,7 +278,7 @@ private fun SummaryGrid(activeNeeds: Int, totalDonations: Double = 0.0, donorsCo
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-                Text(text = "Total received donations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                Text(text = stringResource(R.string.total_received_donations), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -365,7 +367,7 @@ private fun PostNeedFab(onClick: () -> Unit) {
     Button(onClick = onClick, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
         Icon(Icons.Outlined.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "Post a Need", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+        Text(text = stringResource(R.string.post_a_need), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 

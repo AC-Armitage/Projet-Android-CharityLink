@@ -31,16 +31,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.fpl.charitylink.R
 import com.fpl.charitylink.ui.theme.SurfaceContainerLow
 import kotlinx.coroutines.launch
 
 private data class OnboardingPage(
-    val title: String,
-    val body: String,
+    val titleRes: Int,
+    val bodyRes: Int,
     val imageUrl: String
 )
 
@@ -52,18 +54,18 @@ fun OnboardingScreen(
 ) {
     val pages = listOf(
         OnboardingPage(
-            title = "Give with confidence",
-            body = "Discover charities and local causes in your community.",
+            titleRes = R.string.onboarding_title_1,
+            bodyRes = R.string.onboarding_body_1,
             imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuDBLZi9sfzV4tvUju7EJTM927MzEV7gnO_Hor5NUvlbtuDV3DnPjOT8YoaFQ9iTFKcc2VaZmmZ7wKCDBM3QjFF5je5SV6s_8Rusgxd31Dvp2tivD09hrTnAk0VQ0JsAVLimUUWsAXBbAt1qSUTW5EKY5ZWgN3tgy6VA8VSeiVG9Ask080OzUw70GmNhFAaojcu02oYR7QpsVgDKtqQ0jJ5ANN1gkfBJ-QxgVCmMjx-uGIQte0OFamipe46UBQ5f_HZizq5Xbp2eI-0I"
         ),
         OnboardingPage(
-            title = "Donate money, clothes, or food",
-            body = "Choose the way you want to give based on current needs.",
+            titleRes = R.string.onboarding_title_2,
+            bodyRes = R.string.onboarding_body_2,
             imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuDZhEKmIo11AxmiXNoHDr88_EEBjMmMJ579c7XLKWYbUPXmYq_xjSYgTj38AQFA_weM0ANcacaFoJvdAWsFSUF9x--229wOHDn7k42Oay_BYQJKvASy5_Sw5Ar5oqb9toFO8VGFpElkcNf8TEAur2psTe5mLZFBVdGgd2uNVetKEer8bFNVxpw0u0keGW2B1VKAiEeE7CuGJxZFmLmxJVeanicSKBUPwNjxHNsE6qOEfP1JG0xEeVXlAb9F6Lq88ilJFEsiVtgvziLV"
         ),
         OnboardingPage(
-            title = "Join the community",
-            body = "See how your contributions change lives with real-time updates.",
+            titleRes = R.string.onboarding_title_3,
+            bodyRes = R.string.onboarding_body_3,
             imageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBlZld0B8k7dEwnRVBWXpZXjNUGPO8K90rLqbXC9YBkwTXR0_nk-f7dONJkgUHW1YAfg1gGM_FsIt9fp_E32UHdqNyQMn1dbKB7vUORGNwR19pC4o36OEygd5FbHCBJitqlgztl-PciuoL09tUpm8OjYwO2B1rK0Ld2dMifsvsFx5V8l6iZrrBM15IUbY4y7G1PPitto2oU65n48O0Sk0zvNcCw9f8bqCpwzX5m-CMBAP2slPGVqz3G-G9EGkVG0g_7EEfHmP1bGrkP"
         )
     )
@@ -88,14 +90,14 @@ fun OnboardingScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "CharityLink",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 TextButton(onClick = onSkip) {
                     Text(
-                        text = "Skip",
+                        text = stringResource(R.string.skip),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -132,14 +134,14 @@ fun OnboardingScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = page.title,
+                            text = stringResource(page.titleRes),
                             style = MaterialTheme.typography.headlineLarge,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = page.body,
+                            text = stringResource(page.bodyRes),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -201,7 +203,7 @@ fun OnboardingScreen(
                     )
                 ) {
                     Text(
-                        text = if (isLastPage) "Get started" else "Next",
+                        text = if (isLastPage) stringResource(R.string.get_started) else stringResource(R.string.next),
                         style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(modifier = Modifier.width(8.dp))

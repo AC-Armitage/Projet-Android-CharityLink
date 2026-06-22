@@ -17,7 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -135,7 +137,7 @@ fun NotificationsScreen(
                         )
                     }
                     Text(
-                        text = "Notifications",
+                        text = stringResource(R.string.notifications),
                         style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -143,7 +145,7 @@ fun NotificationsScreen(
                 if (uiState.notifications.any { !it.read }) {
                     TextButton(onClick = { viewModel.markAllAsRead() }) {
                         Text(
-                            text = "Mark all read",
+                            text = stringResource(R.string.mark_all_read),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -211,12 +213,12 @@ fun NotificationsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "No notifications yet",
+                                        text = stringResource(R.string.no_notifications),
                                         style = MaterialTheme.typography.headlineSmall,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "We'll let you know when something important happens.",
+                                        text = stringResource(R.string.no_notifications_subtitle),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

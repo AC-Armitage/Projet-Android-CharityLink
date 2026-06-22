@@ -12,7 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fpl.charitylink.data.model.Campaign
 import com.fpl.charitylink.data.repository.CampaignRepository
@@ -117,7 +119,7 @@ fun DonateScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "Donating to",
+                                text = stringResource(R.string.donating_to),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -140,7 +142,7 @@ fun DonateScreen(
 
                     // Amount selection
                     Text(
-                        text = "Choose an amount",
+                        text = stringResource(R.string.choose_amount),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -165,7 +167,7 @@ fun DonateScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Or enter a custom amount",
+                        text = stringResource(R.string.or_custom_amount),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +188,7 @@ fun DonateScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Add a message (optional)",
+                        text = stringResource(R.string.add_message_optional),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

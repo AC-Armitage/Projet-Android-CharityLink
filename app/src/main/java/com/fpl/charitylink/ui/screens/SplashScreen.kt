@@ -23,9 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import com.fpl.charitylink.ui.theme.PrimaryContainer
 import com.fpl.charitylink.ui.theme.PrimaryFixed
 import com.fpl.charitylink.ui.theme.PrimaryFixedDim
@@ -66,14 +68,14 @@ fun SplashScreen(onGetStarted: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "CharityLink",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Connecting generosity with need",
+                    text = stringResource(R.string.app_tagline),
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
@@ -90,7 +92,7 @@ fun SplashScreen(onGetStarted: () -> Unit) {
                 ),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                Text(text = "Get started", style = MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(R.string.get_started), style = MaterialTheme.typography.labelLarge)
             }
         }
 

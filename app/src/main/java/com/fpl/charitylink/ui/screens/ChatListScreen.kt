@@ -15,7 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.fpl.charitylink.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fpl.charitylink.data.model.Chat
 import com.fpl.charitylink.viewmodel.AuthViewModel
@@ -180,7 +182,7 @@ private fun EmptyChatsState(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No conversations yet.",
+                text = stringResource(R.string.no_conversations),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -197,7 +199,7 @@ private fun EmptyChatsState(
             } else {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Donors who message you will appear here.",
+                    text = stringResource(R.string.donors_will_appear),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
