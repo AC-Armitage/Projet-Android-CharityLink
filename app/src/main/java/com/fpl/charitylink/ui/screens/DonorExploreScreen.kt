@@ -27,6 +27,8 @@ import com.fpl.charitylink.viewmodel.ExploreViewModel
 fun DonorExploreScreen(
     onAssociationClick: (String) -> Unit,
     onBack: () -> Unit,
+    isPickingChatRecipient: Boolean = false,
+    onStartChatClick: (id: String, name: String) -> Unit = { _, _ -> },
     viewModel: ExploreViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -36,7 +38,7 @@ fun DonorExploreScreen(
         topBar = {
             Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
                 TopAppBar(
-                    title = { Text("Explore Associations") },
+                    title = { Text(if (isPickingChatRecipient) "Message an Association" else "Explore Associations") },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -100,7 +102,13 @@ fun DonorExploreScreen(
                     items(uiState.filteredOrganizations) { org ->
                         SimpleAssociationCard(
                             organization = org,
-                            onClick = { onAssociationClick(org.uid) }
+                            onClick = {
+                                if (isPickingChatRecipient) {
+                                    onStartChatClick(org.uid, org.name)
+                                } else {
+                                    onAssociationClick(org.uid)
+                                }
+                            }
                         )
                     }
                 }

@@ -34,6 +34,7 @@ object CharityLinkDestinations {
     const val NOTIFICATIONS = "notifications"
     const val CHAT_LIST = "chat_list"
     const val CHAT = "chat"
+    const val NEW_CHAT = "new_chat"
     const val EDIT_NEED = "edit_need"
     const val FAQ = "faq"
     const val SUPPORT = "support"
@@ -205,6 +206,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
         }
         composable("${CharityLinkDestinations.NEED_DETAIL}/{needId}") { backStackEntry ->
             val needId = backStackEntry.arguments?.getString("needId") ?: ""
+            val chatViewModel: com.fpl.charitylink.viewmodel.ChatViewModel = viewModel()
             NeedDetailScreen(
                 needId = needId,
                 onBack = { navController.popBackStack() },
@@ -213,6 +215,11 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 },
                 onDonateClick = { needId ->
                     navController.navigate("${CharityLinkDestinations.DONATE}/$needId")
+                },
+                onMessageClick = { associationId, associationName ->
+                    val chatId = chatViewModel.getChatId(associationId)
+                    val encodedName = java.net.URLEncoder.encode(associationName, "UTF-8")
+                    navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$associationId/$encodedName")
                 }
             )
         }
@@ -274,10 +281,16 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
             )
         }
         composable(CharityLinkDestinations.ALL_CAMPAIGNS) {
+            val chatViewModel: com.fpl.charitylink.viewmodel.ChatViewModel = viewModel()
             AllCampaignsScreen(
                 onBack = { navController.popBackStack() },
                 onCampaignClick = { campaignId ->
                     navController.navigate("${CharityLinkDestinations.NEED_DETAIL}/$campaignId")
+                },
+                onMessageClick = { associationId, associationName ->
+                    val chatId = chatViewModel.getChatId(associationId)
+                    val encodedName = java.net.URLEncoder.encode(associationName, "UTF-8")
+                    navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$associationId/$encodedName")
                 }
             )
         }
@@ -292,6 +305,23 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
                 onChatClick = { chatId, otherUserId, otherUserName ->
                     val encodedName = java.net.URLEncoder.encode(otherUserName, "UTF-8")
                     navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$otherUserId/$encodedName")
+                },
+                onNewChatClick = { navController.navigate(CharityLinkDestinations.NEW_CHAT) }
+            )
+        }
+        composable(CharityLinkDestinations.NEW_CHAT) {
+            val chatViewModel: com.fpl.charitylink.viewmodel.ChatViewModel = viewModel()
+            DonorExploreScreen(
+                onBack = { navController.popBackStack() },
+                onAssociationClick = {},
+                isPickingChatRecipient = true,
+                onStartChatClick = { associationId, associationName ->
+                    val chatId = chatViewModel.getChatId(associationId)
+                    val encodedName = java.net.URLEncoder.encode(associationName, "UTF-8")
+                    // Replace this picker screen with the chat itself so back goes to the chat list, not back here.
+                    navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$associationId/$encodedName") {
+                        popUpTo(CharityLinkDestinations.CHAT_LIST)
+                    }
                 }
             )
         }

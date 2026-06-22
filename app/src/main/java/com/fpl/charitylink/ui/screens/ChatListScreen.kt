@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fpl.charitylink.data.model.Chat
+import com.fpl.charitylink.viewmodel.AuthViewModel
 import com.fpl.charitylink.viewmodel.ChatViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -27,10 +29,16 @@ import java.util.Locale
 fun ChatListScreen(
     onBack: () -> Unit,
     onChatClick: (chatId: String, otherUserId: String, otherUserName: String) -> Unit,
-    viewModel: ChatViewModel = viewModel()
+    onNewChatClick: () -> Unit = {},
+    viewModel: ChatViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUserId = viewModel.currentUserId
+    val role by authViewModel.cachedRole.collectAsState()
+    // Only donors can currently browse a list of associations to start a chat with —
+    // there's no equivalent "browse donors" screen yet for the association side.
+    val canStartNewChat = role != "association"
 
     LaunchedEffect(Unit) {
         viewModel.loadChats()
@@ -46,10 +54,21 @@ fun ChatListScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            if (canStartNewChat) {
+                FloatingActionButton(onClick = onNewChatClick) {
+                    Icon(Icons.Filled.Add, contentDescription = "Start a new conversation")
+                }
+            }
         }
     ) { innerPadding ->
         if (uiState.chats.isEmpty()) {
-            EmptyChatsState(modifier = Modifier.padding(innerPadding))
+            EmptyChatsState(
+                canStartNewChat = canStartNewChat,
+                onNewChatClick = onNewChatClick,
+                modifier = Modifier.padding(innerPadding)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -143,7 +162,11 @@ private fun ChatListItem(chat: Chat, currentUserId: String, onClick: () -> Unit)
 }
 
 @Composable
-private fun EmptyChatsState(modifier: Modifier = Modifier) {
+private fun EmptyChatsState(
+    canStartNewChat: Boolean,
+    onNewChatClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,6 +184,24 @@ private fun EmptyChatsState(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (canStartNewChat) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Button(
+                    onClick = onNewChatClick,
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Find an association to message")
+                }
+            } else {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Donors who message you will appear here.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
         }
     }
 }
