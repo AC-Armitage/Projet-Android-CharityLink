@@ -314,7 +314,6 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
             DonorExploreScreen(
                 onBack = { navController.popBackStack() },
                 onAssociationClick = {},
-                isPickingChatRecipient = true,
                 onStartChatClick = { associationId, associationName ->
                     val chatId = chatViewModel.getChatId(associationId)
                     val encodedName = java.net.URLEncoder.encode(associationName, "UTF-8")
