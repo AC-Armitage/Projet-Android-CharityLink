@@ -314,14 +314,7 @@ fun CharityLinkNavHost(authViewModel: AuthViewModel = viewModel()) {
             DonorExploreScreen(
                 onBack = { navController.popBackStack() },
                 onAssociationClick = {},
-                onStartChatClick = { associationId, associationName ->
-                    val chatId = chatViewModel.getChatId(associationId)
-                    val encodedName = java.net.URLEncoder.encode(associationName, "UTF-8")
-                    // Replace this picker screen with the chat itself so back goes to the chat list, not back here.
-                    navController.navigate("${CharityLinkDestinations.CHAT}/$chatId/$associationId/$encodedName") {
-                        popUpTo(CharityLinkDestinations.CHAT_LIST)
-                    }
-                }
+
             )
         }
         composable("${CharityLinkDestinations.CHAT}/{chatId}/{otherUserId}/{otherUserName}") { backStackEntry ->
