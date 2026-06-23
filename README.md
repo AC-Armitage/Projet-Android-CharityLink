@@ -128,13 +128,3 @@ graph TD
 
 **Local persistence:** `UserPreferences` (DataStore) caches the signed-in user's role, name, email, photo URL, and language preference so the UI can render immediately on launch without waiting on a network round-trip, and re-syncs from Firestore in the background.
 
-## Screenshots
-
-
-| Onboarding | Donor Home | Campaign Detail |
-|---|---|---|
-| ![Onboarding](screenshots/onboarding.png) | ![Donor Home](screenshots/donor_home.png) | ![Campaign Detail](screenshots/campaign_detail.png) |
-
-| Donate | Chat | Association Home |
-|---|---|---|
-| ![Donate](screenshots/donate.png) | ![Chat](screenshots/chat.png) | ![Association Home](screenshots/association_home.png) |
